@@ -65,7 +65,8 @@ struct Settings {
   bool brackets = true;
   bool refresh = false;
   QString cacheOptions = "";
-  bool noResize = false;
+  bool cacheResize = true;
+  int jpgQuality = 95;
   bool subdirs = true;
   QString startAt = "";
   QString endAt = "";

@@ -78,6 +78,22 @@ NOTE! If this is set in the `[main]` section (recommended) it will automatically
 
 *Allowed in section(s): `[main]`, `[<PLATFORM>]`*
 
+#### cacheResize="false"
+By default, to save space, Skyscraper resizes large pieces of artwork before adding them to the resource cache. Setting this option to `"false"` will disable this and save the artwork files with their original resolution. Beware that Skyscraper converts all artwork resources to lossless PNG's when saving them. High resolution images such as covers will take up a lot of space! So set this to `"false"` with caution.
+
+NOTE! This is not related to the artwork compositing that happens when generating a game list. This is *only* related to how Skyscraper handles artwork when adding it to the resource cache while gathering data from the scraping modules.
+
+To read about artwork compositing go [here](ARTWORK.md) instead.
+
+*Allowed in section(s): `[main]`, `[<PLATFORM>]`, `[<SCRAPING MODULE>]`*
+
+#### jpgQuality="95"
+Sets the default jpg quality when saving image resources to the cache. This will be ignored if `--noresize` is set. Default is 95.
+
+NOTE! All screenshots and any image resource that uses transparency will always be saved as png images. In those cases this setting will be ignored as png's are lossless.
+
+*Allowed in section(s): `[main]`, `[<PLATFORM>]`, `[<SCRAPING MODULE>]`*
+
 #### cacheCovers="true"
 Enables/disables the caching of the resource type `cover` when scraping with any module. If you never use covers in your artwork configuration, setting this to `"false"` can save you some space.
 
@@ -281,14 +297,14 @@ NOTE! Please consider using the command line option `--endat <FILENAME>` instead
 *Allowed in section(s): `[<PLATFORM>]`, `[<FRONTEND>]`*
 
 #### excludeFiles="&lt;PATTERN 1,PATTERN 2&gt;"
-Per platform Skyscraper have default file extensions that it will accept. This option allows you to exclude certain files within that scope. The pattern is a simple asterisk type pattern. In cases where you need to match for a comma you need to escape it as '\,'.
+Per platform Skyscraper have default file extensions that it will accept. This option allows you to exclude certain files within that scope. The pattern is a simple asterisk type pattern. In cases where you need to match for a comma you need to escape it as `\,`.
 
 NOTE! You might also want to check out the file extension options.
 
 *Allowed in section(s): `[main]`, `[<PLATFORM>]`, `[<FRONTEND>]`*
 
 #### includeFiles="&lt;PATTERN1,PATTERN2&gt;"
-Per platform Skyscraper have default file extensions that it will accept. This option allows you to only include certain files within that scope. The pattern is a simple asterisk type pattern. In cases where you need to match for a comma you need to escape it as '\,'.
+Per platform Skyscraper have default file extensions that it will accept. This option allows you to only include certain files within that scope. The pattern is a simple asterisk type pattern. In cases where you need to match for a comma you need to escape it as `\,`.
 
 NOTE! You might also want to check out the file extension options.
 

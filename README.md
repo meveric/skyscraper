@@ -149,14 +149,19 @@ Check the full artwork documentation [here](docs/ARTWORK.md)
 * Create a testmode for the artwork compositor that let's you quickly render an example to see if you got everything set up right in the artwork xml
 * Allow 'region' to be a list similar to 'regionPrios'. When using 'region' it should simply keep the default priority list and add those from 'region' to the top. 'regionPrios' should still overwrite it entirely. Naming change probably a good idea, for instance rename 'region' to 'regionsPrefer' or something. 'regionPrios' should probably also be changed to 'regionsOverride'. (Thank you to 'corezon' for suggesting this).
 
-#### Version 3.4.0 (In progress, unreleased)
+#### Version 3.4.1 (In progress, unreleased)
+* Further optimized artwork space requirements. Now checks if original takes up less space than resized artwork, then forces use of original for those cases
+
+#### Version 3.4.0 (4th February 2020)
+* Disabled config.ini migration as most people should be migrated now
 * Added 'launcher' option to 'simple mode' when using 'pegasus' frontend
 * Added 'excludeFiles' config option that allows excluding certain files when scraping (Thank you to 'timothybrown' for suggesting this)
 * Added 'includeFiles' config option that allows only including certain files when scraping
 * Added '--excludefiles' cli option that allows excluding certain files when scraping
 * Added '--includefiles' cli option that allows only including certain files when scraping
-* 'noresize' CLI option and 'cacheResize' config.ini option are now deprecated, see below
-* All images now saved to cache in their original format as received from the sources instead of converting them to PNG's. Should save space and be more efficient
+* If 'noresize' is set all images are now saved to cache in their original format and size instead of always converting them to PNG's (Thank you to 'krcroft' for requesting this)
+* Added 'jpgQuality' config option that sets the default JPG quality (0-100) when '--noresize' is NOT set. Screenshots and images with transparency are still saved as PNG's.
+* Upped 'screenscraper' request limiter to 1.2 seconds per request to avoid 'maximum threads per minute reached' error message
 
 #### Version 3.3.8 (12th January 2020)
 * Fixed bug in platform alias for 'pc (microsoft windows)' which was missing the last ')' bracket (Thank you to 'o0alucard0o' for reporting this)
