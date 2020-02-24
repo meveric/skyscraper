@@ -14,9 +14,6 @@ Skyscraper supports a variety of different scraping sources called *scraping mod
 * AttractMode
 * Pegasus
 
-## Patreon
-Yes, [I have one](https://www.patreon.com/muldjord). Absolutely NOT a requirement if you want to use Skyscraper! But there it is. And please understand that becoming a patron does in no way give you any special say in what features I work on or how I develop Skyscraper in the future. It will be seen as an appreciative gesture, nothing else. :)
-
 ## How to install Skyscraper
 Follow the steps below to install the latest version of Skyscraper. Lines beginning with `$` signifies a command you need run in a terminal on the machine you wish to install it on.
 
@@ -86,7 +83,7 @@ IMPORTANT!!! In order for Skyscraper to work properly, it is necessary to quit y
 Remember, you can completely customize the artwork Skyscraper exports. Check out the documentation [here](docs/ARTWORK.md). If you just want to use the default (pretty cool looking) artwork Skyscraper provides, read on.
 
 ### A simple use case
-For first-time users I recommend reading the short and to-the-point [use case](docs/USECASE.md). Please read it and if it catches your interest check out the advanced options [here](#manual-mode-for-advanced-users). If you just want to scrape a platform and be done with it check [Simple mode](#simple-mode).
+For first-time users I recommend reading the short and to-the-point [use case](docs/USECASE.md). Please read it and if it catches your interest check out the common options [here](#manual-mode-recommended) (recommended). If you just want to scrape a platform and be done with it check [Simple mode](#simple-mode).
 
 ### Simple mode
 Skyscraper includes a *Simple mode* invoked simply by running Skyscraper with no command-line options like so:
@@ -112,7 +109,7 @@ The most important ones are probably:
 * `--videos`
 * `--unattend`
 
-If you have your roms in a non-default location (default is `/home/<USER>/RetroPie/roms/<PLATFORM>`) or wish to export the game list or artwork to non-default locations, you will also need these:
+If you have your roms in a non-default location (default for RetroPie users is `/home/<USER>/RetroPie/roms/<PLATFORM>`) or wish to export the game list or artwork to non-default locations, you will also need these:
 * `-i <PATH>`
 * `-g <PATH>`
 * `-o <PATH>`
@@ -149,8 +146,15 @@ Check the full artwork documentation [here](docs/ARTWORK.md)
 * Create a testmode for the artwork compositor that let's you quickly render an example to see if you got everything set up right in the artwork xml
 * Allow 'region' to be a list similar to 'regionPrios'. When using 'region' it should simply keep the default priority list and add those from 'region' to the top. 'regionPrios' should still overwrite it entirely. Naming change probably a good idea, for instance rename 'region' to 'regionsPrefer' or something. 'regionPrios' should probably also be changed to 'regionsOverride'. (Thank you to 'corezon' for suggesting this).
 
-#### Version 3.4.1 (In progress, unreleased)
+#### Version 3.4.2 (In progress, unreleased)
+* Improved filename versioning removal for optimal query generation
+* Updated 'mameMap.csv' with latest Mame v0.218 listings
+* Added support for 'wheel' artwork type in 'arcadedb' scraping module
+
+#### Version 3.4.1 (11th February 2020)
 * Further optimized artwork space requirements. Now checks if original takes up less space than resized artwork, then forces use of original for those cases
+* The 'thegamesdb' module now also supports wheel and marquee for the games that have them (Thank you to 'tv21' for pointing this out)
+* Updated developer and publisher json list for 'thegamesdb'
 
 #### Version 3.4.0 (4th February 2020)
 * Disabled config.ini migration as most people should be migrated now
