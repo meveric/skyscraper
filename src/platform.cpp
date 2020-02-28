@@ -56,6 +56,7 @@ QStringList Platform::getPlatforms()
   platforms.append("atarijaguar");
   platforms.append("atarilynx");
   platforms.append("atarist");
+  platforms.append("atomiswave");
   platforms.append("c16");
   platforms.append("c64");
   platforms.append("c128");
@@ -159,6 +160,8 @@ QStringList Platform::getScrapers(QString platform)
   } else if(platform == "atarilynx") {
     scrapers.append("screenscraper");
   } else if(platform == "atarist") {
+    scrapers.append("screenscraper");
+  } else if(platform == "atomiswave") {
     scrapers.append("screenscraper");
   } else if(platform == "c16") {
     scrapers.append("screenscraper");
@@ -350,6 +353,8 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
     formats.append("*.lnx");
   } else if(platform == "atarist") {
     formats.append("*.st *.stx *.img *.rom *.raw *.ipf *.ctr");
+  } else if(platform == "atomiswave") {
+    formats.append("*.lst");
   } else if(platform == "c16") {
     formats.append("*.crt *.d64 *.prg *.tap *.t64 *.g64 *.x64 *.vsf");
   } else if(platform == "c64") {
@@ -515,6 +520,8 @@ QString Platform::getDefaultScraper(QString platform)
   } else if(platform == "atarilynx") {
     scraper = "cache";
   } else if(platform == "atarist") {
+    scraper = "cache";
+  } else if(platform == "atomiswave") {
     scraper = "cache";
   } else if(platform == "c16") {
     scraper = "cache";
@@ -764,6 +771,8 @@ QStringList Platform::getAliases(QString platform)
   } else if(platform == "atarist") {
     aliases.append("atari st");
     aliases.append("atari st/ste");
+  } else if(platform == "atomiswave") {
+    aliases.append("awave");
   } else if(platform == "c16") {
     aliases.append("plus/4");
     aliases.append("commodore plus/4");
