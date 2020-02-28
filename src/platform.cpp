@@ -82,6 +82,7 @@ QStringList Platform::getPlatforms()
   platforms.append("megadrive");
   platforms.append("msx");
   platforms.append("n64");
+  platforms.append("naomi");
   platforms.append("nds");
   platforms.append("neogeo");
   platforms.append("neogeocd");
@@ -214,6 +215,8 @@ QStringList Platform::getScrapers(QString platform)
   } else if(platform == "msx") {
     scrapers.append("screenscraper");
   } else if(platform == "n64") {
+    scrapers.append("screenscraper");
+  } else if(platform == "naomi") {
     scrapers.append("screenscraper");
   } else if(platform == "nds") {
     scrapers.append("screenscraper");
@@ -399,6 +402,8 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
     formats.append("*.rom *.mx1 *.mx2 *.col *.dsk");
   } else if(platform == "n64") {
     formats.append("*.z64 *.n64 *.v64");
+  } else if(platform == "naomi") {
+    formats.append("*.lst");
   } else if(platform == "nds") {
     formats.append("*.nds");
   } else if(platform == "neogeo") {
@@ -562,6 +567,8 @@ QString Platform::getDefaultScraper(QString platform)
   } else if(platform == "msx") {
     scraper = "cache";
   } else if(platform == "n64") {
+    scraper = "cache";
+  } else if(platform == "naomi") {
     scraper = "cache";
   } else if(platform == "nds") {
     scraper = "cache";
@@ -1109,6 +1116,8 @@ QStringList Platform::getAliases(QString platform)
     aliases.append("msx r turbo");
   } else if(platform == "n64") {
     aliases.append("nintendo 64");
+  } else if(platform == "naomi") {
+    aliases.append("sega naomi");
   } else if(platform == "nds") {
     aliases.append("nintendo ds");
   } else if(platform == "neogeo") {
