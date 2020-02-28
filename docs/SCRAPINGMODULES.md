@@ -55,7 +55,7 @@ Their API is based on a file name search. This means that the returned results d
 * API request limit: *None*
 * Thread limit: *1*
 * Platform support: *Exclusively arcade platforms using official MAME files*
-* Media support: *`cover`, `screenshot`, `marquee`, `video`*
+* Media support: *`cover`, `screenshot`, `wheel`, `marquee`, `video`*
 * Example use: `Skyscraper -p fba -s arcadedb`
 
 Several Arcade databases using the MAME file name id's have existed throughout the years. Currently the best one, in my opinion, is the ArcadeDB made by motoschifo. It goes without saying that this module is best used for arcade platforms such as `fba`, `arcade` and any of the mame sub-platforms.
@@ -77,8 +77,6 @@ This module also supports videos for many games.
 * Example use: `Skyscraper -p amiga -s openretro`
 
 If you're looking to scrape the Amiga RetroPlay LHA files, there's no better way to do this than using the `openretro` module. It is by far the best WHDLoad Amiga database on the internet when it comes to data scraping, and maybe even the best Amiga game info database overall.
-
-It does have a caveat at the moment though. It has a search word limit of 2 words due to high server loads, which does make it slightly unreliable for any non-LHA files. But please try it out for any of your ADF files.
 
 The database also supports many non-Amiga platforms, but there's no doubt that Amiga is the strong point.
 
