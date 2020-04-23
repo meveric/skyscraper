@@ -87,7 +87,7 @@ void Skyscraper::run()
 
   printf("\n");
   
-  if(!config.nohints) {
+  if(config.hints) {
     showHint();
   }
 
@@ -393,7 +393,7 @@ void Skyscraper::run()
       break;
     }
   }
-  // Ready, set, GO!!! Start all threads
+  // Ready, set, GO! Start all threads
   for(const auto thread: threadList) {
     thread->start();
     state = 3;
@@ -483,7 +483,9 @@ void Skyscraper::entryReady(GameEntry entry, QString output, QString debug)
   printf("Elapsed time   : \033[1;33m%s\033[0m\n", secsToString(elapsed).toStdString().c_str());
   printf("Est. time left : \033[1;33m%s\033[0m\n\n", secsToString(estTime).toStdString().c_str());
 
-  if(currentFile == config.maxFails && notFound == config.maxFails &&
+  if(!config.onlyMissing &&
+     currentFile == config.maxFails &&
+     notFound == config.maxFails &&
      config.scraper != "import" && config.scraper != "cache") {
     printf("\033[1;31mThis is NOT going well! I guit! *slams the door*\nNo, seriously, out of %d files we had %d misses. So either the scraping source is down or you are using a scraping source that doesn't support this platform. Please try another scraping module (check '--help').\n\nNow exiting...\033[0m\n", config.maxFails, config.maxFails);
     exit(1);
@@ -530,7 +532,7 @@ void Skyscraper::checkThreads()
     frontend->sortEntries(gameEntries);
     printf("Assembling game list...");
     frontend->assembleList(finalOutput, gameEntries);
-    printf(" \033[1;32mDone!!!\033[0m\n");
+    printf(" \033[1;32mDone!\033[0m\n");
     QFile gameListFile(gameListFileString);
     printf("Now writing '\033[1;33m%s\033[0m'... ", gameListFileString.toStdString().c_str());
     fflush(stdout);
@@ -539,9 +541,9 @@ void Skyscraper::checkThreads()
       gameListFile.write(finalOutput.toUtf8());
       state = 0;
       gameListFile.close();
-      printf("\033[1;32mSuccess!!!\033[0m\n\n");
+      printf("\033[1;32mSuccess!\033[0m\n\n");
     } else {
-      printf("\033[1;31mCouldn't open file for writing!!!\nAll that work for nothing... :(\033[0m\n");
+      printf("\033[1;31mCouldn't open file for writing!\nAll that work for nothing... :(\033[0m\n");
     }
   } else {
     printf("\033[1;34m---- Resource gathering run completed! YAY! ----\033[0m\n");
@@ -562,7 +564,7 @@ void Skyscraper::checkThreads()
   }
   printf("\033[1;34mTotal number of games: %d\033[0m\n", totalFiles);
   printf("\033[1;32mSuccessfully processed games: %d\033[0m\n", found);
-  printf("\033[1;33mSkipped games: %d\033[0m (Filenames saved to '\033[1;33m~/.skyscraper/%s\033[0m')\n\n", notFound, skippedFileString.toStdString().c_str());
+  printf("\033[1;33mSkipped games: %d\033[0m (Filenames saved to '\033[1;33m/home/USER/.skyscraper/%s\033[0m')\n\n", notFound, skippedFileString.toStdString().c_str());
 
   // All done, now clean up and exit to terminal
   emit finished();
@@ -650,8 +652,8 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   copyFile(distro, current);
 
   /* -----
-    Files that will only be overwritten if they don't already exist
-    ----- */
+     Files that will only be overwritten if they don't already exist
+     ----- */
 
   current = "artwork.xml";
   distro = "/usr/local/etc/skyscraper/artwork.xml";
@@ -684,7 +686,7 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
 
   /* -----
      END updating files from distribution files
-    ----- */
+     ----- */
 
   //migrate(parser.isSet("c")?parser.value("c"):"config.ini");
 
@@ -754,7 +756,7 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
     config.verbosity = settings.value("verbosity").toInt();
   }
   if(settings.contains("hints")) {
-    config.nohints = !settings.value("hints").toBool();
+    config.hints = settings.value("hints").toBool();
   }
   if(settings.contains("subdirs")) {
     config.subdirs = settings.value("subdirs").toBool();
@@ -863,6 +865,9 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   }
   if(settings.contains("spaceCheck")) {
     config.spaceCheck = settings.value("spaceCheck").toBool();
+  }
+  if(settings.contains("nameTemplate")) {
+    config.nameTemplate = settings.value("nameTemplate").toString();
   }
   settings.endGroup();
 
@@ -995,6 +1000,9 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   }
   if(settings.contains("includeFiles")) {
     config.includeFiles = settings.value("includeFiles").toString();
+  }
+  if(settings.contains("nameTemplate")) {
+    config.nameTemplate = settings.value("nameTemplate").toString();
   }
   settings.endGroup();
 
@@ -1156,11 +1164,88 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
     if(config.cacheFolder.isEmpty())
       config.cacheFolder = "cache/" + config.platform;
   }
+  if(parser.isSet("flags")) {
+    if(parser.value("flags") == "help") {
+      printf("Showing '\033[1;33m--flags\033[0m' help\n");
+      printf("Use comma-separated flags (eg. '--flags FLAG1,FLAG2') to enable multiple flags.\nThe following is a list of valid flags and what they do:\n");
+
+      printf("  \033[1;33mforcefilename\033[0m: Use filename as game name instead of the returned game title when generating a game list. Consider using 'nameTemplate' config.ini option instead.\n");
+      printf("  \033[1;33mnobrackets\033[0m: Disables any [] and () tags in the frontend game titles. Consider using 'nameTemplate' config.ini option instead.\n");
+      printf("  \033[1;33mnocovers\033[0m: Disable covers/boxart from being cached locally. Only do this if you do not plan to use the cover artwork in 'artwork.xml'\n");
+      printf("  \033[1;33mnohints\033[0m: Disables the 'DID YOU KNOW:' hints when running Skyscraper.\n");
+      printf("  \033[1;33mnomarquees\033[0m: Disable marquees from being cached locally. Only do this if you do not plan to use the marquee artwork in 'artwork.xml'\n");
+      printf("  \033[1;33mnoresize\033[0m: Disable resizing of artwork when saving it to the resource cache. Normally they are resized to save space.\n");
+      printf("  \033[1;33mnoscreenshots\033[0m: Disable screenshots/snaps from being cached locally. Only do this if you do not plan to use the screenshot artwork in 'artwork.xml'\n");
+      printf("  \033[1;33mnosubdirs\033[0m: Do not include input folder subdirectories when scraping.\n");
+      printf("  \033[1;33mnowheels\033[0m: Disable wheels from being cached locally. Only do this if you do not plan to use the wheel artwork in 'artwork.xml'\n");
+      printf("  \033[1;33monlymissing\033[0m: Tells Skyscraper to skip all files which already have any data from any source in the cache.\n");
+      printf("  \033[1;33mrelative\033[0m: Forces all gamelist paths to be relative to rom location.\n");
+      printf("  \033[1;33mskipexistingcovers\033[0m: When generating gamelists, skip processing covers that already exist in the media output folder.\n");
+      printf("  \033[1;33mskipexistingmarquees\033[0m: When generating gamelists, skip processing marquees that already exist in the media output folder.\n");
+      printf("  \033[1;33mskipexistingscreenshots\033[0m: When generating gamelists, skip processing screenshots that already exist in the media output folder.\n");
+      printf("  \033[1;33mskipexistingvideos\033[0m: When generating gamelists, skip copying videos that already exist in the media output folder.\n");
+      printf("  \033[1;33mskipexistinwheels\033[0m: When generating gamelists, skip processing wheels that already exist in the media output folder.\n");
+      printf("  \033[1;33mskipped\033[0m: When generating a gamelist, also include games that do not have any cached data.\n");
+      printf("  \033[1;33msymlink\033[0m: Forces cached videos to be symlinked to game list destination to save space. WARNING! Deleting or moving files from your cache can invalidate the links!\n");
+      printf("  \033[1;33munpack\033[0m: Unpacks and checksums the file inside 7z or zip files instead of the compressed file itself. Be aware that this option requires '7z' to be installed on the system to work. Only relevant for 'screenscraper' scraping module.\n");
+      printf("\n");
+      exit(0);
+    } else {
+      QList<QString> flags = parser.value("flags").split(",");
+      for(const auto &flag: flags) {
+	if(flag == "forcefilename") {
+	  config.forceFilename = true;
+	} else if(flag == "nobrackets") {
+	  config.brackets = false;
+	} else if(flag == "nocovers") {
+	  config.cacheCovers = false;
+	} else if(flag == "nohints") {
+	  config.hints = false;
+	} else if(flag == "nomarquees") {
+	  config.cacheMarquees = false;
+	} else if(flag == "noresize") {
+	  config.cacheResize = false;
+	} else if(flag == "noscreenshots") {
+	  config.cacheScreenshots = false;
+	} else if(flag == "nosubdirs") {
+	  config.subdirs = false;
+	} else if(flag == "nowheels") {
+	  config.cacheWheels = false;
+	} else if(flag == "onlymissing") {
+	  config.onlyMissing = true;
+	} else if(flag == "relative") {
+	  config.relativePaths = true;
+	} else if(flag == "skipexistingcovers") {
+	  config.skipExistingCovers = true;
+	} else if(flag == "skipexistingmarquees") {
+	  config.skipExistingMarquees = true;
+	} else if(flag == "skipexistingscreenshots") {
+	  config.skipExistingScreenshots = true;
+	} else if(flag == "skipexistingvideos") {
+	  config.skipExistingVideos = true;
+	} else if(flag == "skipexistingwheels") {
+	  config.skipExistingWheels = true;
+	} else if(flag == "skipped") {
+	  config.skipped = true;
+	} else if(flag == "symlink") {
+	  config.symlink = true;
+	} else if(flag == "unpack") {
+	  config.unpack = true;
+	} else {
+	  printf("Unknown flag '%s', please check '--flags help' for list of all valid flags. Exiting...\n", flag.toStdString().c_str());
+	  exit(1);
+	}
+      }
+    }
+  }
   if(parser.isSet("videos")) {
     config.videos = true;
   }
   if(parser.isSet("symlink")) {
     config.symlink = true;
+  }
+  if(parser.isSet("skipexistingvideos")) {
+    config.skipExistingVideos = true;
   }
   if(parser.isSet("nocovers")) {
     config.cacheCovers = false;
@@ -1173,6 +1258,18 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   }
   if(parser.isSet("nomarquees")) {
     config.cacheMarquees = false;
+  }
+  if(parser.isSet("skipexistingcovers")) {
+    config.skipExistingCovers = true;
+  }
+  if(parser.isSet("skipexistingscreenshots")) {
+    config.skipExistingScreenshots = true;
+  }
+  if(parser.isSet("skipexistingwheels")) {
+    config.skipExistingWheels = true;
+  }
+  if(parser.isSet("skipexistingmarquees")) {
+    config.skipExistingMarquees = true;
   }
   if(parser.isSet("skipped")) {
     config.skipped = true;
@@ -1218,6 +1315,9 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   if(parser.isSet("unpack")) {
     config.unpack = true;
   }
+  if(parser.isSet("onlymissing")) {
+    config.onlyMissing = true;
+  }
   if(parser.isSet("startat")) {
     config.startAt = parser.value("startat");
   }
@@ -1257,7 +1357,7 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
     config.lang = parser.value("lang");
   }
   if(parser.isSet("nohints")) {
-    config.nohints = true;
+    config.hints = false;
   }
   if(parser.isSet("verbosity")) {
     config.verbosity = parser.value("verbosity").toInt();
@@ -1478,7 +1578,7 @@ void Skyscraper::doPrescrapeJobs()
     printf("\033[1;32mTHIS MODULE IS POWERED BY IGDB.COM\033[0m\n");
     config.threads = 1;
     if(config.userCreds.isEmpty()) {
-      printf("\033[1;31mThe IGDB module requires a free personal API key to work. Get one at https://api.igdb.com and set it either with '-u <KEY>' or by adding the following to '~/.skyscraper/config.ini':\n[igdb]\nuserCreds=\"<KEY>\"\n\nSkyscraper can't continue, now exiting...\n");
+      printf("\033[1;31mThe IGDB module requires a free personal API key to work. Get one at https://api.igdb.com and set it either with '-u <KEY>' or by adding the following to '/home/USER/.skyscraper/config.ini':\n[igdb]\nuserCreds=\"<KEY>\"\n\nSkyscraper can't continue, now exiting...\n");
       exit(1);
     }
     printf("Fetching key status, just a sec...\n");
@@ -1486,7 +1586,7 @@ void Skyscraper::doPrescrapeJobs()
     q.exec();
     QJsonObject jsonObj = QJsonDocument::fromJson(manager.getData()).array().first().toObject();
     if(jsonObj.isEmpty()) {
-      printf("Recieved invalid IGDB server response, maybe their server is having issues, please try again later...\n");
+      printf("Received invalid IGDB server response, maybe their server is having issues, please try again later...\n");
       exit(1);
     }
     if(jsonObj["authorized"].toBool()) {
@@ -1514,7 +1614,7 @@ void Skyscraper::doPrescrapeJobs()
   } else if(config.scraper == "screenscraper") {
     if(config.user.isEmpty() || config.password.isEmpty()) {
       if(config.threads > 1) {
-	printf("\033[1;33mForcing 1 threads as this is the anonymous limit in the ScreenScraper scraping module. Sign up for an account at https://www.screenscraper.fr and support them to gain more threads. Then use the credentials with Skyscraper using the '-u [user:password]' command line option or by setting 'userCreds=[user:password]' in '~/.skyscraper/config.ini'.\033[0m\n\n");
+	printf("\033[1;33mForcing 1 threads as this is the anonymous limit in the ScreenScraper scraping module. Sign up for an account at https://www.screenscraper.fr and support them to gain more threads. Then use the credentials with Skyscraper using the '-u user:password' command line option or by setting 'userCreds=\"user:password\"' in '/home/USER/.skyscraper/config.ini'.\033[0m\n\n");
 	config.threads = 1;
       }
     } else {
@@ -1523,7 +1623,11 @@ void Skyscraper::doPrescrapeJobs()
       q.exec();
       QJsonObject jsonObj = QJsonDocument::fromJson(manager.getData()).object();
       if(jsonObj.isEmpty()) {
-	printf("Recieved invalid ScreenScraper server response, maybe their server is having issues, forcing 1 thread...\n");
+	if(manager.getData().contains("Erreur de login")) {
+	  printf("\033[0;31mScreenScraper login error! Please verify that you've entered your credentials correctly in '/home/USER/.skyscraper/config.ini'. It needs to look EXACTLY like this, but with your USER and PASS:\033[0m\n\033[1;33m[screenscraper]\nuserCreds=\"USER:PASS\"\033[0m\033[0;31m\nContinuing with unregistered user, forcing 1 thread...\033[0m\n\n");
+	} else {
+	  printf("\033[1;33mReceived invalid / empty ScreenScraper server response, maybe their server is busy / overloaded. Forcing 1 thread...\033[0m\n\n");
+	}
 	config.threads = 1;
       } else {
 	int allowedThreads = jsonObj["response"].toObject()["ssuser"].toObject()["maxthreads"].toString().toInt();
@@ -1532,7 +1636,7 @@ void Skyscraper::doPrescrapeJobs()
 	    printf("User is allowed %d threads, but user has set it manually, so ignoring.\n\n", allowedThreads);
 	  } else {
 	    config.threads = (allowedThreads <= 8?allowedThreads:8);
-	    printf("Setting threads to %d as allowed for the supplied user credentials.\n\n", config.threads);
+	    printf("Setting threads to \033[1;32m%d\033[0m as allowed for the supplied user credentials.\n\n", config.threads);
 	  }
 	}
       }

@@ -31,7 +31,8 @@
 #include "strtools.h"
 #include "crc32.h"
 
-#define RETRIESMAX 4
+constexpr int RETRIESMAX = 4;
+constexpr int MINARTSIZE = 256;
 
 ScreenScraper::ScreenScraper(Settings *config) : AbstractScraper(config)
 {
@@ -79,7 +80,10 @@ void ScreenScraper::getSearchResults(QList<GameEntry> &gameEntries,
     
     QByteArray headerData = data.left(1024); // Minor optimization with minimal more RAM usage
     // Do error checks on headerData. It's more stable than checking the potentially faulty JSON
-    if(headerData.contains("non trouvée")) {
+    if(headerData.isEmpty()) {
+      printf("\033[1;33mRetrying request...\033[0m\n\n");
+      continue;
+    } else if(headerData.contains("non trouvée")) {
       return;
     } else if(headerData.contains("API totalement fermé")) {
       printf("\033[1;31mThe ScreenScraper API is currently closed, exiting nicely...\033[0m\n\n");
@@ -96,7 +100,7 @@ void ScreenScraper::getSearchResults(QList<GameEntry> &gameEntries,
     } else if(headerData.contains("API fermé pour les non membres") ||
 	      headerData.contains("API closed for non-registered members") ||
 	      headerData.contains("****T****h****e**** ****m****a****x****i****m****u****m**** ****t****h****r****e****a****d****s**** ****a****l****l****o****w****e****d**** ****t****o**** ****l****e****e****c****h****e****r**** ****u****s****e****r****s**** ****i****s**** ****a****l****r****e****a****d****y**** ****u****s****e****d****")) {
-      printf("\033[1;31mThe screenscraper service is currently closed or too busy to handle requests from unregistered and inactive users. Sign up for an account at https://www.screenscraper.fr and contribute to the database to gain more threads. Then use the credentials with Skyscraper using the '-u [user:password]' command line option or by setting 'userCreds=[user:password]' in '~/.skyscraper/config.ini'.\033[0m\n\n");
+      printf("\033[1;31mThe screenscraper service is currently closed or too busy to handle requests from unregistered and inactive users. Sign up for an account at https://www.screenscraper.fr and contribute to gain more threads. Then use the credentials with Skyscraper using the '-u user:pass' command line option or by setting 'userCreds=\"user:pass\"' in '/home/USER/.skyscraper/config.ini'.\033[0m\n\n");
       if(retries == RETRIESMAX - 1) {
 	reqRemaining = 0;
 	return;
@@ -121,7 +125,7 @@ void ScreenScraper::getSearchResults(QList<GameEntry> &gameEntries,
 	jsonErrorFile.write(data);
 	jsonErrorFile.close();
       }
-      printf("The erroneous answer was written to '~/.skyscraper/screenscraper_error.json'. Please create a bug report at 'https://github.com/muldjord/skyscraper/issues' and attach that file.\n");
+      printf("The erroneous answer was written to '/home/USER/.skyscraper/screenscraper_error.json'. Please create a bug report at 'https://github.com/muldjord/skyscraper/issues' and attach that file.\n");
       break; // DON'T try again! If we don't get a valid JSON document, something is very wrong with the API
     }
 
@@ -204,16 +208,24 @@ void ScreenScraper::getGameData(GameEntry &game)
       getReleaseDate(game);
       break;
     case COVER:
-      getCover(game);
+      if(config->cacheCovers) {
+	getCover(game);
+      }
       break;
     case SCREENSHOT:
-      getScreenshot(game);
+      if(config->cacheScreenshots) {
+	getScreenshot(game);
+      }
       break;
     case WHEEL:
-      getWheel(game);
+      if(config->cacheWheels) {
+	getWheel(game);
+      }
       break;
     case MARQUEE:
-      getMarquee(game);
+      if(config->cacheMarquees) {
+	getMarquee(game);
+      }
       break;
     case VIDEO:
       if(config->videos) {
@@ -304,7 +316,17 @@ void ScreenScraper::getTags(GameEntry &game)
 
 void ScreenScraper::getCover(GameEntry &game)
 {
-  QString url = getJsonText(jsonObj["medias"].toArray(), REGION, QList<QString>({"box-2D"}));
+  QString url = "";
+  if(config->platform == "arcade" ||
+     config->platform == "fba" ||
+     config->platform == "mame-advmame" ||
+     config->platform == "mame-libretro" ||
+     config->platform == "mame-mame4all" ||
+     config->platform == "neogeo") {
+    url = getJsonText(jsonObj["medias"].toArray(), REGION, QList<QString>({"flyer"}));
+  } else {
+    url = getJsonText(jsonObj["medias"].toArray(), REGION, QList<QString>({"box-2D"}));
+  }
   if(!url.isEmpty()) {
     bool moveOn = true;
     for(int retries = 0; retries < RETRIESMAX; ++retries) {
@@ -312,11 +334,10 @@ void ScreenScraper::getCover(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= 1024 && image.loadFromData(manager.getData())) {
+      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
 	game.coverData = manager.getData();
       } else {
-	if(manager.getData().size() < 1024)
-	  moveOn = false;
+	moveOn = false;
       }
       if(moveOn)
 	break;
@@ -334,11 +355,10 @@ void ScreenScraper::getScreenshot(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= 1024 && image.loadFromData(manager.getData())) {
+      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
 	game.screenshotData = manager.getData();
       } else {
-	if(manager.getData().size() < 1024)
-	  moveOn = false;
+	moveOn = false;
       }
       if(moveOn)
 	break;
@@ -356,11 +376,10 @@ void ScreenScraper::getWheel(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= 1024 && image.loadFromData(manager.getData())) {
+      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
 	game.wheelData = manager.getData();
       } else {
-	if(manager.getData().size() < 1024)
-	  moveOn = false;
+	moveOn = false;
       }
       if(moveOn)
 	break;
@@ -378,11 +397,10 @@ void ScreenScraper::getMarquee(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= 1024 && image.loadFromData(manager.getData())) {
+      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
 	game.marqueeData = manager.getData();
       } else {
-	if(manager.getData().size() < 1024)
-	  moveOn = false;
+	moveOn = false;
       }
       if(moveOn)
 	break;
@@ -501,14 +519,16 @@ QList<QString> ScreenScraper::getSearchNames(const QFileInfo &info)
     sha1Result.prepend("0");
   }
 
-  hashList.append(QUrl::toPercentEncoding(info.fileName()));
+  // For some reason the APIv2 example from their website does not url encode '(' and ')'
+  // so I've excluded them
+  hashList.append(QUrl::toPercentEncoding(info.fileName(), "()"));
   hashList.append(crcResult.toUpper());
   hashList.append(md5Result.toUpper());
   hashList.append(sha1Result.toUpper());
 
   QList<QString> searchNames;
   if(info.size() != 0) {
-    searchNames.append("romnom=" + hashList.at(0) + "&crc=" + hashList.at(1) + "&md5=" + hashList.at(2) + "&sha1=" + hashList.at(3) + "&romtaille=" + QString::number(info.size()));
+    searchNames.append("crc=" + hashList.at(1) + "&md5=" + hashList.at(2) + "&sha1=" + hashList.at(3) + "&romnom=" + hashList.at(0) + "&romtaille=" + QString::number(info.size()));
   } else {
     searchNames.append("romnom=" + hashList.at(0));
   }
@@ -743,6 +763,8 @@ QString ScreenScraper::getPlatformId(const QString platform)
     return "11";
   } else if(platform == "wii") {
     return "16";
+  } else if(platform == "wiiu") {
+    return "18";
   } else if(platform == "wonderswan") {
     return "45";
   } else if(platform == "wonderswancolor") {

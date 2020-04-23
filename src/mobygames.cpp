@@ -49,7 +49,6 @@ MobyGames::MobyGames(Settings *config) : AbstractScraper(config)
   fetchOrder.append(DESCRIPTION);
   fetchOrder.append(AGES);
   fetchOrder.append(RATING);
-  // Cover and screenshot MUST be last and in this order!
   fetchOrder.append(COVER);
   fetchOrder.append(SCREENSHOT);
 }
@@ -71,7 +70,7 @@ void MobyGames::getSearchResults(QList<GameEntry> &gameEntries,
   }
 
   if(jsonDoc.object()["code"].toInt() == 429) {
-    printf("\033[1;31mToo many requests!!! This is probably because some other Skyscraper user is currently using the 'mobygames' module. Please wait a while and try again.\n\nNow quitting...\033[0m\n");
+    printf("\033[1;31mToo many requests! This is probably because some other Skyscraper user is currently using the 'mobygames' module. Please wait a while and try again.\n\nNow quitting...\033[0m\n");
     reqRemaining = 0;
   }
 

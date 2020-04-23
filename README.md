@@ -1,7 +1,7 @@
 # Skyscraper by Lars Muldjord
 A powerful and versatile yet easy to use game scraper written in C++ for use with multiple frontends running on a Linux system (macOS and Windows too, but not officially supported). It scrapes and caches various game resources from various scraping sources, including media such as screenshot, cover and video. It then gives you the option to generate a game list and artwork for the chosen frontend by combining all of the cached resources.
 
-All Skyscraper features are [well-documented](https://github.com/muldjord/skyscraper/tree/master/docs). If you still have questions after reading the documentation, please consider asking them on the [RetroPie subreddit](https://www.reddit.com/r/RetroPie/) or in the official [RetroPie forums](https://retropie.org.uk/forum). The `Issues` page here on Github is for bug reports and feature requests only. Thanks!
+All Skyscraper features are [well-documented](https://github.com/muldjord/skyscraper/tree/master/docs) and there's also a [F.A.Q](https://github.com/muldjord/skyscraper/blob/master/docs/FAQ.md). If you still have questions after reading the documentation, please consider asking them on the [RetroPie subreddit](https://www.reddit.com/r/RetroPie/) or in the official [RetroPie forums](https://retropie.org.uk/forum). The `Issues` page here on Github is for bug reports and feature requests only. Thanks!
 
 #### Supported platforms (set with '-p'):
 Check the full list of platforms [here](docs/PLATFORMS.md).
@@ -75,7 +75,7 @@ $ rm -Rf .skyscraper
 You might be asked for your sudo password during the processs. On RetroPie the default password is `raspberry`.
 
 ### Windows
-Windows is not officially supported at this time! But I do semi-regularly compile and release an unsupported Windows 64-bit version that works just fine. Be sure to read the included README from the downloaded file before using it! And just to be clear: You are on your own if you use this version - please don't ask me questions about it. Get the Windows version [here](http://www.muldjord.com/downloads/Skyscraper_3.3.8_unsupported_win_version.zip).
+Windows is not officially supported at this time! But I do semi-regularly compile and release an unsupported Windows 64-bit version that works just fine. Be sure to read the included README from the downloaded file before using it! And just to be clear: You are on your own if you use this version - please don't ask me questions about it. Get the Windows version [here](http://www.muldjord.com/downloads/Skyscraper_3.4.6_unsupported_win_version.zip).
 
 ## How to use Skyscraper
 IMPORTANT!!! In order for Skyscraper to work properly, it is necessary to quit your frontend before running it! If you're running EmulationStation, you can quit it by pressing F4.
@@ -83,18 +83,9 @@ IMPORTANT!!! In order for Skyscraper to work properly, it is necessary to quit y
 Remember, you can completely customize the artwork Skyscraper exports. Check out the documentation [here](docs/ARTWORK.md). If you just want to use the default (pretty cool looking) artwork Skyscraper provides, read on.
 
 ### A simple use case
-For first-time users I recommend reading the short and to-the-point [use case](docs/USECASE.md). Please read it and if it catches your interest check out the common options [here](#manual-mode-recommended) (recommended). If you just want to scrape a platform and be done with it check [Simple mode](#simple-mode).
+For first-time users I recommend reading the short and to-the-point [use case](docs/USECASE.md). Please read it and get back here when you got the gist of it.
 
-### Simple mode
-Skyscraper includes a *Simple mode* invoked simply by running Skyscraper with no command-line options like so:
-```
-$ Skyscraper
-```
-In simple mode Skyscraper will ask you a bunch of questions, create a script based on your answers and finally run the script which scrapes the chosen platform using those options. This can be useful for first-time users, since it gives a bit of an overview of many of the things you can configure Skyscraper to do. If you're curious you can check out the generated script afterwards. It's located at `~/.skyscraper/skyscript.sh`.
-
-NOTE: If you choose to use this mode, please be aware that many of the scraping modules have limits and user requirements that need to be considered when scraping any number of files. You should familiarize yourself [with these](docs/SCRAPINGMODULES.md) before using Skyscraper.
-
-### Manual mode (recommended)
+### A quick run-down of Skyscraper
 Skyscraper is a command line tool, and has many, many options for you to fiddle around with. I recommend taking a look at all of them to familiarize yourself with the possibilites:
 ```
 $ Skyscraper --help
@@ -114,13 +105,13 @@ If you have your roms in a non-default location (default for RetroPie users is `
 * `-g <PATH>`
 * `-o <PATH>`
 
-For almost any command line option, consider setting them in the `~/.skyscraper/config.ini` file as described [here](docs/CONFIGINI.md). This will make the options permanent so you don't need to type them in all the time.
+For almost any command line option, consider setting them in the `/home/USER/.skyscraper/config.ini` file as described [here](docs/CONFIGINI.md). This will make the options permanent so you don't need to type them in all the time.
 
-#### Scraping and caching single roms or a subset of roms
-Sometimes you'd want to update the cached data for a single or a subset of roms. Skyscraper allows this by letting you either provide one or more single rom filenames to be added to the end of a command line OR by using the `--startat` and `--endat` options (read more about those options [here](docs/CLIHELP.md#--startat-filename)). For single roms here's an example: `Skyscraper -p amiga -s openretro "/path/to/rom name.lha"`. Be aware that this only updates the resource cache for this particular rom. It DOES NOT update it in your game list. To do so you need to regenerate the game list by simply leaving out the `-s` option entirely like so `Skyscraper -p <PLATFORM>`.
+#### Gathering data for a subset of roms
+Skyscraper offers several ways of gathering data for a subset of roms. If you just want to scrape the roms that have no data in the cache whatsoever, you can do so with the `--onlymissing` command-line option. You can also check out the `--startat FILENAME` and `--endat FILENAME` options. If you just want to gather data for a couple of roms you can simply add the filename(s) to the end of the command-line (eg. `Skyscraper -p amiga -s openretro "/path/to/rom name 1.lha" "/path/to/rom name 2.lha"`). And probably the most advanced (and quite handy) way to gather data for a subset of roms is to make use of the `--cache report:missing=RESOURCE` option. This can generate a report containing the filenames that are missing a certain resource. You can then feed the report back into Skyscraper with the `--fromfile REPORTFILE` afterwards. Skyscraper will then only scrape the files contained in the report.
 
 ### config.ini
-A lesser known, but extremely useful, feature of Skyscraper is to add your desired config variables to `~/.skyscraper/config.ini`. Any options set in this file will be used by default by Skyscraper. So if you always use, for example, `-i <SOME FOLDER>` on command line, you can set the matching option `inputFolder="<SOME FOLDER>"` in the config.
+A lesser known, but extremely useful, feature of Skyscraper is to add your desired config variables to `/home/USER/.skyscraper/config.ini`. Any options set in this file will be used by default by Skyscraper. So if you always use, for example, `-i <SOME FOLDER>` on command line, you can set the matching option `inputFolder="<SOME FOLDER>"` in the config.
 
 For a full description of all availabe config options, check [here](docs/CONFIGINI.md).
 
@@ -135,6 +126,17 @@ To read more about any of the features described above, please check out all of 
 ### Artwork look and effects
 Check the full artwork documentation [here](docs/ARTWORK.md)
 
+### Simple mode
+Skyscraper also includes a *Simple mode* invoked simply by running Skyscraper with no command-line options like so:
+```
+$ Skyscraper
+```
+I do not recommend using this mode anymore as I consider it to be deprecated after Skyscraper was officially added to the RetroPie-Setup script.
+
+In simple mode Skyscraper will ask you a bunch of questions, create a script based on your answers and finally run the script which scrapes the chosen platform using those options. This can be useful for first-time users, since it gives a bit of an overview of many of the things you can configure Skyscraper to do. If you're curious you can check out the generated script afterwards. It's located at `/home/USER/.skyscraper/skyscript.sh`.
+
+NOTE: If you choose to use this mode, please be aware that many of the scraping modules have limits and user requirements that need to be considered when scraping any number of files. You should familiarize yourself [with these](docs/SCRAPINGMODULES.md) before using Skyscraper in general.
+
 ## Release notes
 
 #### Version x.x.x (Features under consideration, all unimplemented)
@@ -145,6 +147,41 @@ Check the full artwork documentation [here](docs/ARTWORK.md)
 * Add the option of scraping custom platforms by configuring them in the config with an alias to an already existing platform. Example: scrape 'pcenginecd' could be scraped as 'pcengine' in case you have those files in a 'roms/pcenginecd' folder instead of the pcengine folder. Check here: https://github.com/muldjord/skyscraper/issues/136
 * Create a testmode for the artwork compositor that let's you quickly render an example to see if you got everything set up right in the artwork xml
 * Allow 'region' to be a list similar to 'regionPrios'. When using 'region' it should simply keep the default priority list and add those from 'region' to the top. 'regionPrios' should still overwrite it entirely. Naming change probably a good idea, for instance rename 'region' to 'regionsPrefer' or something. 'regionPrios' should probably also be changed to 'regionsOverride'. (Thank you to 'corezon' for suggesting this).
+* Implemented a less ridig filename match for the 'import' module to allow for close match filenames
+#
+#### Version 3.5.0 (In progress, unreleased)
+* For 'screenscraper', 'thegamesdb', 'mobygames' and 'arcadedb' Skyscraper will now no longer fetch the artworks if user has requested it to remain uncached (Thank you to user 'herbymachine' for the request)
+* Added '--skipexistingmedia' option to allow for faster gamelist generation in cases where some artwork already exists in the gamelist media folder (Thank you to 'jacrify' for suggesting this)
+* Added '--flags' command-line option that collects certain flag-like options into one
+* Added deprecated warnings to all options that are now moved to the '--flags' option
+
+#### Version 3.4.10 (20th April 2020)
+* Re-implemented double-check when saving artwork to cache to avoid 0-byte files on systems with a broken libpng (Thank you to 'jacrify' for letting me know)
+
+#### Version 3.4.9 (17th April 2020)
+* Added 'wiiu' platform (Thank you to 'minilandl' for suggesting it)
+
+#### Version 3.4.8 (14th April 2020)
+* Lowered sanity check limit of 1024 bytes for artwork from 'screenscraper' to 256 bytes (Thank you to user 'Paul-Colucci' for reporting this)
+
+#### Version 3.4.7 (12th April 2020)
+* If '--onlymissing' is set the initial first found rom check is ignored (Thank you to user 'Paul-Colucci' for reporting this)
+
+#### Version 3.4.6 (9th April 2020)
+* Implemented nameTemplate as config.ini option. See docs/CONFIGINI.md doc for explanation (Thank you to user 'vg8020' for suggesting this)
+
+#### Version 3.4.5 (7th April 2020)
+* Minor fix to 'screenscraper' romnom query
+
+#### Version 3.4.4 (7th April 2020)
+* Remove '*.bin' support for 'saturn' platform since '*.cue' is already in there. This caused double-entries in gamelists (Thank you to user 'joaoluizcarvalho' for pointing this out)
+* Now handles faulty login (incorrectly entered in config.ini) better with 'screenscraper'
+* Fixed bug that caused 'pegasus' launch command to be entered incorrectly (Thank you to user 'Itetrel' for letting me know)
+* Added '--onlymissing' CLI option which allows users to skip files that already have any kind of data cached from any source
+* Now clearly states what happened when a request timed out when using 'screenscraper' (Thank you to 'seriema' for pointing this out)
+
+#### Version 3.4.3 (14th March 2020)
+* All arcade platforms now use 'flyer' from 'screenscraper' for cover artwork instead of 'box-2D' (Thank you to user 'aidy80s' for suggesting this)
 
 #### Version 3.4.2 (26th February 2020)
 * Improved filename versioning removal for optimal query generation
@@ -236,7 +273,7 @@ Check the full artwork documentation [here](docs/ARTWORK.md)
 * Optimized all cache resource iterations to use const references instead of copies
 * Optimized the entire codebase by removing all Qt-centric foreach iterate-by-copy to use references instead
 * Fixed bug where 'screenscraper' would only look for ESRB age classification
-* Potential faulty JSON replies from Screenscraper are now saved to '~/.skyscraper/screenscraper_error.json' for easier debugging
+* Potential faulty JSON replies from Screenscraper are now saved to '/home/USER/.skyscraper/screenscraper_error.json' for easier debugging
 
 #### Version 3.2.2 (3rd August 2019)
 * Added 'bat' scripts to sha1 special handling list (please purge platforms using 'bat' files and rescrape)

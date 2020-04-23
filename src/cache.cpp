@@ -651,7 +651,7 @@ bool Cache::purgeResources(QString purgeStr)
 bool Cache::purgeAll(const bool unattend)
 {
   if(!unattend) {
-    printf("\033[1;31mWARNING!!! You are about to purge / remove ALL resources from the Skyscaper cache connected to the currently selected platform. THIS CANNOT BE UNDONE!\033[0m\n\n");
+    printf("\033[1;31mWARNING! You are about to purge / remove ALL resources from the Skyscaper cache connected to the currently selected platform. THIS CANNOT BE UNDONE!\033[0m\n\n");
     printf("\033[1;34mDo you wish to continue\033[0m (y/N)? ");
     std::string userInput = "";
     getline(std::cin, userInput);
@@ -903,7 +903,7 @@ void Cache::assembleReport(const QString inputFolder, const QString filter, QStr
       reportFile.close();
       printf("\033[1;32m Done!\033[0m\n\033[1;33m%d file(s) is/are missing the '%s' resource.\033[0m\n\n", missing, resType.toStdString().c_str());
     } else {
-      printf("Report file could not be opened for writing, please check permissions of folder '~/.skyscraper', then try again...\n");
+      printf("Report file could not be opened for writing, please check permissions of folder '/home/USER/.skyscraper', then try again...\n");
       return;
     }
   }
@@ -915,7 +915,7 @@ bool Cache::vacuumResources(const QString inputFolder, const QString filter,
 {
   if(!unattend) {
     std::string userInput = "";
-    printf("\033[1;33mWARNING!!! Vacuuming your Skyscraper cache removes all resources that don't match your current romset (files located at '%s' or any of its subdirectories matching the suffixes supported by the platform and any extension(s) you might have added manually). Please consider making a backup of your Skyscraper cache before performing this action. The cache for this platform is listed under 'Cache folder' further up and is usually located under '~/.skyscraper/' unless you've set it manually.\033[0m\n\n", inputFolder.toStdString().c_str());
+    printf("\033[1;33mWARNING! Vacuuming your Skyscraper cache removes all resources that don't match your current romset (files located at '%s' or any of its subdirectories matching the suffixes supported by the platform and any extension(s) you might have added manually). Please consider making a backup of your Skyscraper cache before performing this action. The cache for this platform is listed under 'Cache folder' further up and is usually located under '/home/USER/.skyscraper/' unless you've set it manually.\033[0m\n\n", inputFolder.toStdString().c_str());
     printf("\033[1;34mDo you wish to continue\033[0m (y/N)? ");
     getline(std::cin, userInput);
     if(userInput != "y") {
@@ -1486,8 +1486,9 @@ void Cache::addResource(const Resource &resource, GameEntry &entry,
       }
       if(config.cacheResize) {
 	QImage image;
-	image.loadFromData(*imageData);
-	if(!image.isNull()) {
+	if(imageData->size() > 0 &&
+	   image.loadFromData(*imageData) &&
+	   !image.isNull()) {
 	  int max = 800;
 	  if(image.width() > max || image.height() > max) {
 	    image = image.scaled(max, max, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -1496,9 +1497,9 @@ void Cache::addResource(const Resource &resource, GameEntry &entry,
 	  QBuffer b(&resizedData);
 	  b.open(QIODevice::WriteOnly);
 	  if((image.hasAlphaChannel() && hasAlpha(image)) || resource.type == "screenshot") {
-	    image.save(&b, "png");
+	    okToAppend = image.save(&b, "png");
 	  } else {
-	    image.save(&b, "jpg", config.jpgQuality);
+	    okToAppend = image.save(&b, "jpg", config.jpgQuality);
 	  }
 	  b.close();
 	  if(imageData->size() > resizedData.size()) {
@@ -1522,6 +1523,11 @@ void Cache::addResource(const Resource &resource, GameEntry &entry,
 	} else {
 	  okToAppend = false;
 	}
+      } else {
+	// Image was faulty and could not be saved to cache so we clear
+	// the QByteArray data in game entry to make sure we get a "NO"
+	// in the terminal output from scraperworker.cpp.
+	imageData->clear();
       }
     } else if(resource.type == "video") {
       if(entry.videoData.size() <= config.videoSizeLimit) {

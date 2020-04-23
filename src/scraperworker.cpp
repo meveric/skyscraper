@@ -116,35 +116,50 @@ void ScraperWorker::run()
       }
     }
 
+    // Create the game entry we use for the rest of the process
+    GameEntry game;
+
+    // Create list for potential game entries that will come from the scraping source
     QList<GameEntry> gameEntries;
 
     bool fromCache = false;
     if(config.scraper == "cache" && cache->hasEntries(cacheId)) {
       fromCache = true;
-      GameEntry localGame;
-      localGame.cacheId = cacheId;
-      cache->fillBlanks(localGame);
-      if(localGame.title.isEmpty()) {
-	localGame.title = compareTitle;
+      GameEntry cachedGame;
+      cachedGame.cacheId = cacheId;
+      cache->fillBlanks(cachedGame);
+      if(cachedGame.title.isEmpty()) {
+	cachedGame.title = compareTitle;
       }
-      if(localGame.platform.isEmpty()) {
-	localGame.platform = config.platform;
+      if(cachedGame.platform.isEmpty()) {
+	cachedGame.platform = config.platform;
       }
-      gameEntries.append(localGame);
+      gameEntries.append(cachedGame);
+    } else if(config.onlyMissing && cache->hasEntries(cacheId)) {
+      // Skip this file. '--onlymissing' has been set.
+      game.found = false;
+      game.title = compareTitle;
+      output.append("\033[1;33m---- Skipping game '" + info.completeBaseName() + "' since '--onlymissing' has been set ----\033[0m\n\n");
+      emit entryReady(game, output, debug);
+      if(forceEnd) {
+	break;
+      } else {
+	continue;
+      }
     } else {
       if(config.scraper != "cache" &&
 	 cache->hasEntries(cacheId, config.scraper) && !config.refresh) {
 	fromCache = true;
-	GameEntry localGame;
-	localGame.cacheId = cacheId;
-	cache->fillBlanks(localGame, config.scraper);
-	if(localGame.title.isEmpty()) {
-	  localGame.title = compareTitle;
+	GameEntry cachedGame;
+	cachedGame.cacheId = cacheId;
+	cache->fillBlanks(cachedGame, config.scraper);
+	if(cachedGame.title.isEmpty()) {
+	  cachedGame.title = compareTitle;
 	}
-	if(localGame.platform.isEmpty()) {
-	  localGame.platform = config.platform;
+	if(cachedGame.platform.isEmpty()) {
+	  cachedGame.platform = config.platform;
 	}
-	gameEntries.append(localGame);
+	gameEntries.append(cachedGame);
       } else {
 	scraper->runPasses(gameEntries, info, output, debug);
       }
@@ -158,8 +173,6 @@ void ScraperWorker::run()
     */
 
     int lowestDistance = 666;
-    // Create the game entry we use for the rest of the process
-    GameEntry game;
     if(gameEntries.isEmpty()) {
       game.title = compareTitle;
       game.found = false;
@@ -220,27 +233,35 @@ void ScraperWorker::run()
     if(!config.pretend && config.scraper == "cache") {
       // Process all artwork
       compositor.saveAll(game, info.completeBaseName());
-      if(config.videos && game.videoFormat != "") {
+      // Copy or symlink videos as requested
+      if(config.videos &&
+	 game.videoFormat != "" &&
+	 !game.videoFile.isEmpty() &&
+	 QFile::exists(game.videoFile)) {
 	QString videoDst = config.videosFolder + "/" + info.completeBaseName() + "." + game.videoFormat;
-	QFile videoFileDst(videoDst);
-	if(videoFileDst.exists()) {
-	  // Try to remove existing video destination file first
-	  videoFileDst.remove();
-	}
-	if(config.symlink && config.scraper == "cache" && !game.videoFile.isEmpty()) {
-	  QFile videoFile(game.videoFile);
-	  if(videoFile.exists())
-	    videoFile.link(videoDst);
+	if(config.skipExistingVideos && QFile::exists(videoDst)) {
 	} else {
-	  QFile videoFile(videoDst);
-	  if(videoFile.open(QIODevice::WriteOnly)) {
-	    videoFile.write(game.videoData);
-	    videoFile.close();
+	  if(QFile::exists(videoDst)) {
+	    QFile::remove(videoDst);
+	  }
+	  if(config.symlink) {
+	    // Try to remove existing video destination file before linking
+	    if(!QFile::link(game.videoFile, videoDst)) {
+	      game.videoFormat = "";
+	    }
+	  } else {
+	    QFile videoFile(videoDst);
+	    if(videoFile.open(QIODevice::WriteOnly)) {
+	      videoFile.write(game.videoData);
+	      videoFile.close();
+	    } else {
+	      game.videoFormat = "";
+	    }
 	  }
 	}
       }
     }
-
+    
     // Add all resources to the cache
     if(config.scraper != "cache" && game.found && !fromCache) {
       game.source = config.scraper;
@@ -285,8 +306,17 @@ void ScraperWorker::run()
     } else {
       output.append("Title:          '\033[1;32m" + game.title + "\033[0m' (" + game.titleSrc + ")\n");
     }
-    if(config.forceFilename) {
-      game.title = StrTools::xmlUnescape(StrTools::stripBrackets(info.completeBaseName()));
+    if(!config.nameTemplate.isEmpty()) {
+      game.title = StrTools::xmlUnescape(NameTools::getNameFromTemplate(game,
+									config.nameTemplate));
+    } else {
+      game.title = StrTools::xmlUnescape(game.title);
+      if(config.forceFilename) {
+	game.title = StrTools::xmlUnescape(StrTools::stripBrackets(info.completeBaseName()));
+      }
+      if(config.brackets) {
+	game.title.append(StrTools::xmlUnescape((game.parNotes != ""?" " + game.parNotes:"") + (game.sqrNotes != ""?" " + game.sqrNotes:"")));
+      }
     }
     output.append("Platform:       '\033[1;32m" + game.platform + "\033[0m' (" + game.platformSrc + ")\n");
     output.append("Release Date:   '\033[1;32m");
@@ -301,17 +331,18 @@ void ScraperWorker::run()
     output.append("Ages:           '\033[1;32m" + game.ages + (game.ages.toInt() != 0?"+":"") + "\033[0m' (" + game.agesSrc + ")\n");
     output.append("Tags:           '\033[1;32m" + game.tags + "\033[0m' (" + game.tagsSrc + ")\n");
     output.append("Rating (0-1):   '\033[1;32m" + game.rating + "\033[0m' (" + game.ratingSrc + ")\n");
-    output.append("Cover:          " + QString((game.coverData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheCovers?"":" (uncached)")) + " (" + game.coverSrc + ")\n");
-    output.append("Screenshot:     " + QString((game.screenshotData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheScreenshots?"":" (uncached)")) + " (" + game.screenshotSrc + ")\n");
-    output.append("Wheel:          " + QString((game.wheelData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheWheels?"":" (uncached)")) + " (" + game.wheelSrc + ")\n");
-    output.append("Marquee:        " + QString((game.marqueeData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheMarquees?"":" (uncached)")) + " (" + game.marqueeSrc + ")\n");
+    output.append("Cover:          " + QString((game.coverData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheCovers || config.scraper == "cache"?"":" (uncached)")) + " (" + game.coverSrc + ")\n");
+    output.append("Screenshot:     " + QString((game.screenshotData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheScreenshots || config.scraper == "cache"?"":" (uncached)")) + " (" + game.screenshotSrc + ")\n");
+    output.append("Wheel:          " + QString((game.wheelData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheWheels || config.scraper == "cache"?"":" (uncached)")) + " (" + game.wheelSrc + ")\n");
+    output.append("Marquee:        " + QString((game.marqueeData.isNull()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((config.cacheMarquees || config.scraper == "cache"?"":" (uncached)")) + " (" + game.marqueeSrc + ")\n");
     if(config.videos) {
       output.append("Video:          " + QString((game.videoFormat.isEmpty()?"\033[1;31mNO":"\033[1;32mYES")) + "\033[0m" + QString((game.videoData.size() <= config.videoSizeLimit?"":" (size exceeded, uncached)")) + " (" + game.videoSrc + ")\n");
     }
     output.append("\nDescription: (" + game.descriptionSrc + ")\n'\033[1;32m" + game.description.left(config.maxLength) + "\033[0m'\n");
 
-    if(!forceEnd)
+    if(!forceEnd) {
       forceEnd = limitReached(output);
+    }
     emit entryReady(game, output, debug);
     if(forceEnd) {
       break;

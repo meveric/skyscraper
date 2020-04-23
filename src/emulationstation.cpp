@@ -50,7 +50,7 @@ bool EmulationStation::skipExisting(QList<GameEntry> &gameEntries, QSharedPointe
 {
   gameEntries = oldEntries;
 
-  printf("Resolving missing entries...\n");
+  printf("Resolving missing entries...");
   int dots = 0;
   for(int a = 0; a < gameEntries.length(); ++a) {
     dots++;
@@ -168,11 +168,7 @@ void EmulationStation::assembleList(QString &finalOutput, QList<GameEntry> &game
 
     finalOutput.append("  <" + entryType + ">\n");
     finalOutput.append("    <path>" + StrTools::xmlEscape(entry.path) + "</path>\n");
-    if(config->brackets) {
-      finalOutput.append("    <name>" + StrTools::xmlEscape(entry.title + (entry.parNotes != ""?" " + entry.parNotes:"") + (entry.sqrNotes != ""?" " + entry.sqrNotes:"")) + "</name>\n");
-    } else {
-      finalOutput.append("    <name>" + StrTools::xmlEscape(entry.title) + "</name>\n");
-    }
+    finalOutput.append("    <name>" + StrTools::xmlEscape(entry.title) + "</name>\n");
     if(entry.coverFile.isEmpty()) {
       finalOutput.append("    <cover />\n");
     } else {

@@ -49,6 +49,7 @@ struct Settings {
   QString marqueesFolder = "";
   QString videosFolder = "";
   QString importFolder = "import";
+  QString nameTemplate = "";
   int doneThreads = 0;
   int threads = 4;
   bool threadsSet = false;
@@ -59,15 +60,13 @@ struct Settings {
   int currentFile = 0;
   int totalFiles = 0;
   int maxLength = 2500;
-  bool videos = false;
-  int videoSizeLimit = 42000000;
-  bool symlink = false;
   bool brackets = true;
   bool refresh = false;
   QString cacheOptions = "";
   bool cacheResize = true;
   int jpgQuality = 95;
   bool subdirs = true;
+  bool onlyMissing = false;
   QString startAt = "";
   QString endAt = "";
   bool pretend = false;
@@ -76,7 +75,7 @@ struct Settings {
   bool interactive = false;
   bool forceFilename = false;
   bool stats = false;
-  bool nohints = false;
+  bool hints = true;
   int verbosity = 0;
   int maxFails = 42;
   bool skipped = false;
@@ -94,10 +93,18 @@ struct Settings {
   
   int romLimit = -1;
 
+  bool videos = false;
+  int videoSizeLimit = 42000000;
+  bool symlink = false;
+  bool skipExistingVideos = false;
   bool cacheCovers = true;
+  bool skipExistingCovers = false;
   bool cacheScreenshots = true;
+  bool skipExistingScreenshots= false;
   bool cacheWheels = true;
+  bool skipExistingWheels = false;
   bool cacheMarquees = true;
+  bool skipExistingMarquees = false;
   
   QString user = "";
   QString password = "";

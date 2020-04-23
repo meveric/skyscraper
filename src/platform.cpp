@@ -115,6 +115,7 @@ QStringList Platform::getPlatforms()
   platforms.append("videopac");
   platforms.append("virtualboy");
   platforms.append("wii");
+  platforms.append("wiiu");
   platforms.append("wonderswan");
   platforms.append("wonderswancolor");
   platforms.append("x68000");
@@ -286,6 +287,10 @@ QStringList Platform::getScrapers(QString platform)
   } else if(platform == "virtualboy") {
     scrapers.append("screenscraper");
   } else if(platform == "wii") {
+    scrapers.append("thegamesdb");
+    scrapers.append("screenscraper");
+  } else if(platform == "wiiu") {
+    scrapers.append("thegamesdb");
     scrapers.append("screenscraper");
   } else if(platform == "wonderswan") {
     scrapers.append("screenscraper");
@@ -444,7 +449,7 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
   } else if(platform == "psx") {
     formats.append("*.cue *.cbn *.img *.iso *.m3u *.mdf *.pbp *.toc *.z *.znx *.chd");
   } else if(platform == "saturn") {
-    formats.append("*.cue *.bin *.iso *.mdf *.chd");
+    formats.append("*.cue *.iso *.mdf *.chd");
   } else if(platform == "scummvm") {
     formats.append("*.svm *.scummvm");
   } else if(platform == "sega32x") {
@@ -469,6 +474,8 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
     formats.append("*.vb");
   } else if(platform == "wii") {
     formats.append("*.iso *.cso *.gcz *.wbfs");
+  } else if(platform == "wiiu") {
+    formats.append("*.iso *.cso *.gcz *.wbfs *.wud *.wux *.rpx *.app");
   } else if(platform == "wonderswan") {
     formats.append("*.ws");
   } else if(platform == "wonderswancolor") {
@@ -638,6 +645,8 @@ QString Platform::getDefaultScraper(QString platform)
   } else if(platform == "virtualboy") {
     scraper = "cache";
   } else if(platform == "wii") {
+    scraper = "cache";
+  } else if(platform == "wiiu") {
     scraper = "cache";
   } else if(platform == "wonderswan") {
     scraper = "cache";
@@ -1258,6 +1267,10 @@ QStringList Platform::getAliases(QString platform)
     aliases.append("virtual boy");
   } else if(platform == "wii") {
     aliases.append("nintendo wii");
+    aliases.append("wiiware");
+  } else if(platform == "wiiu") {
+    aliases.append("nintendo wii u");
+    aliases.append("wii u");
     aliases.append("wiiware");
   } else if(platform == "wonderswancolor") {
     aliases.append("wonderswan color");
