@@ -112,7 +112,7 @@ This option also support template groups separated by `;` within the template. T
 
 ###### Example(s)
 ```
-nameTemplate="%t [%f%];, %P player(s)"
+nameTemplate="%t [%f];, %P player(s)"
 ```
 Will result in: `1945k III [1945kiii], 2 player(s)`
 
@@ -120,7 +120,7 @@ Will result in: `1945k III [1945kiii], 2 player(s)`
 `[main]`, `[<PLATFORM>]`
 
 #### jpgQuality="95"
-Sets the default jpg quality when saving image resources to the cache. This will be ignored if `--noresize` is set. Default is 95.
+Sets the default jpg quality when saving image resources to the cache. This will be ignored if `--flags noresize` is set. Default is 95.
 
 NOTE! All screenshots and any image resource that uses transparency will always be saved as png images. In those cases this setting will be ignored as png's are lossless.
 
@@ -203,6 +203,50 @@ If video scraping is enabled you can set the maximum allowed video file size wit
 ###### Allowed in sections
 `[main]`, `[<PLATFORM>]`, `[<MODULE>]`, `[<SCRAPING MODULE>]`
 
+#### videoConvertCommand="convertvideo.sh %i %o"
+Some scraping modules deliver videos that use a codec or color format that some frontends don't support. In those cases it can be useful to convert the videos before saving them in the Skyscraper resource cache.
+
+This setting allows you to set a command that will be run on each video after it has been downloaded from the selected scraping module. See the examples below for inspiration.
+
+The `%i` and `%o` **are required** and will be replaced with the video input (original) and output (converted) filename as needed by Skyscraper. If you want to force a certain file extension for the converted video file, you also need to set `videoConvertExtension`.
+
+NOTE 1! The first example below makes use of the excellent `ffmpeg` tool. If you want to use this specific example you need to install `ffmpeg` first. On RetroPie and other Debian-derived distros you can install it with `sudo apt install ffmpeg`.
+
+NOTE 2! If you want to use a script for the video conversion and run it directly without path, you need to place it in the `/home/USER/.skyscraper` folder.
+
+###### Example(s)
+```
+videoConvertCommand="ffmpeg -i %i -y -pix_fmt yuv420p -t 00:00:10 -c:v libx264 -crf 23 -c:a aac -b:a 64k -vf scale=640:480:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2,setsar=1 %o"
+videoConvertCommand="videoconvert.sh %i %o"
+```
+
+###### Allowed in sections
+`[main]`, `[<SCRAPING MODULE>]`
+
+#### videoConvertExtension="mp4"
+If you want to force an extension for the converted video file created by the `videoConvertCommand` command, you need to set this option. The converted file will then automatically have this extension no matter what the input file extension is.
+
+For instance, if a scraping module delivers the file `videofile.avi` and you always want the converted files to be `mp4` files, you simply set this option to `videoConvertExtension="mp4"`.
+
+NOTE! It is up to you to make sure that the command you provide in `videoConvertCommand` actually converts to a video file using the selected extension. For some conversion tools such as `ffmpeg` this is handled simply by setting the extension of the output file. But for other tools you might have to provide additional options to the `videoConvertCommand` above.
+
+###### Allowed in sections
+`[main]`, `[<SCRAPING MODULE>]`
+
+#### videoPreferNormalized="true"
+This option is *only* applicable when scraping with the `-s screenscraper` module. ScreenScraper offers two versions of some of their videos. A normalized version, which adheres to some defined standard they made, and the originals. If you prefer converting or standardizing the videos yourself (see `videoConvertCommand` above) then you can set this to `false`. If you do so Skyscraper will fetch the original videos from ScreenScraper instead of the normalized ones.
+
+NOTE! Be aware that the original videos often vary a lot in codec, color format and size. So it is recommended to convert them afterwards using the `videoConvertCommand`.
+
+###### Example(s)
+```
+[screenscraper]
+videoPreferNormalized="false"
+```
+
+###### Allowed in sections
+`[screenscraper]`
+
 #### symlink="false"
 Enabling this option is only relevant while also setting the `videos="true"` option. It basically means that Skyscraper will create a link to the cached videos instead of copying them when generating the game list media files. This will save a lot of space, but has the caveat that if you somehow remove the videos from the cache, the links will be broken and the videos then won't show anymore.
 
@@ -234,7 +278,7 @@ Sets the desired number of parallel threads to be run when scraping. NOTE! Some 
 `[main]`, `[<PLATFORM>]`, `[<SCRAPING MODULE>]`
 
 #### pretend="false"
-This option is *only* relevant when generating a game list (by leaving out the `-s <MODULE>` command line option). It disables the game list generator and artwork compositor and only outputs the results of the potential game list generation to the terminal. It is mostly useful when used as a command line option with `--pretend`. It makes little sense to set it here, but you can if you want to.
+This option is *only* relevant when generating a game list (by leaving out the `-s <MODULE>` command line option). It disables the game list generator and artwork compositor and only outputs the results of the potential game list generation to the terminal. It is mostly useful when used as a command line flag with `--flags pretend`. It makes little sense to set it here, but you can if you want to.
 
 ###### Allowed in sections
 `[main]`, `[<PLATFORM>]`
@@ -252,7 +296,7 @@ When generating a game list Skyscraper will check if it already exists and ask i
 `[main]`, `[<PLATFORM>]`, `[<FRONTEND>]`
 
 #### interactive="false"
-When gathering data from any of the scraping modules many potential entries will be returned. Normally Skyscraper chooses the best entry for you. But should you wish to choose the best entry yourself, you can enable this option. Skyscraper will then list the returned entries and let you choose which one is the best one. It is recommended to use the command line option `--interactive` instead in the (hopefully) rare cases where this mode is necessary.
+When gathering data from any of the scraping modules many potential entries will be returned. Normally Skyscraper chooses the best entry for you. But should you wish to choose the best entry yourself, you can enable this option. Skyscraper will then list the returned entries and let you choose which one is the best one. It is recommended to use the command line flag `--flags interactive` instead in the (hopefully) rare cases where this mode is necessary.
 
 ###### Allowed in sections
 `[main]`, `[<PLATFORM>]`, `[<SCRAPING MODULE>]`

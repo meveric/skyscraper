@@ -332,7 +332,7 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
     formats.append(" ");
   }
   if(platform == "3do") {
-    formats.append("*.iso");
+    formats.append("*.iso *.cue");
   } else if(platform == "3ds") {
     formats.append("*.3ds");
   } else if(platform == "amiga") {
@@ -342,7 +342,7 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
   } else if(platform == "apple2") {
     formats.append("*.dsk");
   } else if(platform == "arcade") {
-    formats.append("");
+    formats.append("*.bin *.dat");
   } else if(platform == "arcadia") {
     formats.append("");
   } else if(platform == "astrocde") {
@@ -424,7 +424,7 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
   } else if(platform == "neogeo") {
     formats.append("");
   } else if(platform == "neogeocd") {
-    formats.append("*.cue *.chd");
+    formats.append("*.cue *.chd *.iso");
   } else if(platform == "nes") {
     formats.append("*.nes *.smc *.sfc *.fig *.swc *.mgd");
   } else if(platform == "ngp") {
@@ -1156,6 +1156,7 @@ QStringList Platform::getAliases(QString platform)
     aliases.append("arcade");
   } else if(platform == "neogeocd") {
     aliases.append("neo geo cd");
+    aliases.append("neo-geo cd");
   } else if(platform == "nes") {
     aliases.append("nintendo entertainment system (nes)");
     aliases.append("nintendo");

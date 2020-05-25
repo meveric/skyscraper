@@ -118,7 +118,7 @@ Scripter::Scripter()
   getline(std::cin, videosStr);
 
   std::string forceFilenameStr = "";
-  printf("\033[1;34mDo you wish to use filenames for game name instead of the one provided by the scraping module\033[0m (y/N)? ");
+  printf("\033[1;34mDo you wish to use filename as game name instead of the one provided by the scraping module\033[0m (y/N)? ");
   getline(std::cin, forceFilenameStr);
 
   std::string bracketsStr = "";
@@ -161,30 +161,52 @@ Scripter::Scripter()
     generateStr += " -o " + artworkFolderStr;
   if(frontendStr != "emulationstation") {
     generateStr += " -f " + frontendStr;
-    if((frontendStr == "attractmode" || frontendStr == "pegasus") && extrasStr != "")
+    if((frontendStr == "attractmode" || frontendStr == "pegasus") && extrasStr != "") {
+      if(extrasStr.find(' ') != std::string::npos &&
+	 extrasStr.front() != '\"' &&
+	 extrasStr.back() != '\"') {
+	extrasStr.insert(0, "\"");
+	extrasStr.push_back('\"');
+      }
       generateStr += " -e " + extrasStr;
+    }
   }
-  if(minMatchStr != "")
-    baseStr += " -m " + minMatchStr;
-  if(forceFilenameStr == "y" || forceFilenameStr == "Y")
-    generateStr += " --forcefilename";
+
+  if(minMatchStr != "") {
+    gatherStr += " -m " + minMatchStr;
+    generateStr += " -m " + minMatchStr;
+  }
   if(refreshStr == "y" || refreshStr == "Y")
     gatherStr += " --cache refresh";
-  if(unpackStr == "y" || unpackStr == "Y")
-    gatherStr += " --unpack";
-  if(bracketsStr == "n")
-    generateStr += " --nobrackets";
-  if(relativeStr == "y" || relativeStr == "Y")
-    generateStr += " --relative";
-  if(videosStr == "y" || videosStr == "Y")
-    baseStr += " --videos";
 
-  baseStr += " --unattend";
+  // !!! Only add flags from here !!!
+  gatherStr += " --flags unattend,skipped,";
+  generateStr += " --flags unattend,skipped,";
+
+  if(unpackStr == "y" || unpackStr == "Y")
+    gatherStr += "unpack,";
+  if(forceFilenameStr == "y" || forceFilenameStr == "Y")
+    generateStr += "forcefilename,";
+  if(bracketsStr == "n")
+    generateStr += "nobrackets,";
+  if(relativeStr == "y" || relativeStr == "Y")
+    generateStr += "relative,";
+  if(videosStr == "y" || videosStr == "Y") {
+    gatherStr += "videos,";
+    generateStr += "videos,";
+  }
+
+  if(gatherStr.back() == ',') {
+    gatherStr = gatherStr.substr(0, gatherStr.length() - 1);
+  }
+  if(generateStr.back() == ',') {
+    generateStr = generateStr.substr(0, generateStr.length() - 1);
+  }
   
   scriptFile.write("#!/bin/bash\n");
   for(const auto &scraper: Platform::getScrapers(QString(platformStr.c_str()))) {
     if(scraper != "cache") {
-      scriptFile.write((baseStr + gatherStr + " -s " + scraper.toStdString() + "\n").c_str());
+      scriptFile.write((baseStr + " -s " + scraper.toStdString() + gatherStr + "\n").c_str());
     } else {
       scriptFile.write((baseStr + generateStr + "\n").c_str());
     }

@@ -334,7 +334,9 @@ void ScreenScraper::getCover(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
+      if(manager.getError(config->verbosity) == QNetworkReply::NoError &&
+	 manager.getData().size() >= MINARTSIZE &&
+	 image.loadFromData(manager.getData())) {
 	game.coverData = manager.getData();
       } else {
 	moveOn = false;
@@ -347,7 +349,7 @@ void ScreenScraper::getCover(GameEntry &game)
 
 void ScreenScraper::getScreenshot(GameEntry &game)
 {
-  QString url = getJsonText(jsonObj["medias"].toArray(), NONE, QList<QString>({"ss"}));
+  QString url = getJsonText(jsonObj["medias"].toArray(), REGION, QList<QString>({"ss", "sstitle"}));
   if(!url.isEmpty()) {
     bool moveOn = true;
     for(int retries = 0; retries < RETRIESMAX; ++retries) {
@@ -355,7 +357,9 @@ void ScreenScraper::getScreenshot(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
+      if(manager.getError(config->verbosity) == QNetworkReply::NoError &&
+	 manager.getData().size() >= MINARTSIZE &&
+	 image.loadFromData(manager.getData())) {
 	game.screenshotData = manager.getData();
       } else {
 	moveOn = false;
@@ -376,7 +380,9 @@ void ScreenScraper::getWheel(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
+      if(manager.getError(config->verbosity) == QNetworkReply::NoError &&
+	 manager.getData().size() >= MINARTSIZE &&
+	 image.loadFromData(manager.getData())) {
 	game.wheelData = manager.getData();
       } else {
 	moveOn = false;
@@ -397,7 +403,9 @@ void ScreenScraper::getMarquee(GameEntry &game)
       manager.request(url);
       q.exec();
       QImage image;
-      if(manager.getData().size() >= MINARTSIZE && image.loadFromData(manager.getData())) {
+      if(manager.getError(config->verbosity) == QNetworkReply::NoError &&
+	 manager.getData().size() >= MINARTSIZE &&
+	 image.loadFromData(manager.getData())) {
 	game.marqueeData = manager.getData();
       } else {
 	moveOn = false;
@@ -410,7 +418,12 @@ void ScreenScraper::getMarquee(GameEntry &game)
 
 void ScreenScraper::getVideo(GameEntry &game)
 {
-  QString url = getJsonText(jsonObj["medias"].toArray(), NONE, QList<QString>({"video-normalized", "video"}));
+  QStringList types;
+  if(config->videoPreferNormalized) {
+    types.append("video-normalized");
+  }
+  types.append("video");
+  QString url = getJsonText(jsonObj["medias"].toArray(), NONE, types);
   if(!url.isEmpty()) {
     bool moveOn = true;
     for(int retries = 0; retries < RETRIESMAX; ++retries) {
@@ -420,7 +433,9 @@ void ScreenScraper::getVideo(GameEntry &game)
       game.videoData = manager.getData();
       // Make sure received data is actually a video file
       QByteArray contentType = manager.getContentType();
-      if(contentType.contains("video/") && game.videoData.size() > 4096) {
+      if(manager.getError(config->verbosity) == QNetworkReply::NoError &&
+	 contentType.contains("video/") &&
+	 game.videoData.size() > 4096) {
 	game.videoFormat = contentType.mid(contentType.indexOf("/") + 1,
 					   contentType.length() - contentType.indexOf("/") + 1);
       } else {

@@ -94,7 +94,10 @@ struct Settings {
   int romLimit = -1;
 
   bool videos = false;
-  int videoSizeLimit = 42000000;
+  bool videoPreferNormalized = true;
+  int videoSizeLimit = 100*1024*1024;
+  QString videoConvertCommand = "";
+  QString videoConvertExtension = "";
   bool symlink = false;
   bool skipExistingVideos = false;
   bool cacheCovers = true;

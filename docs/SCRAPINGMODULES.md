@@ -43,7 +43,7 @@ For newer games there's no way around TheGamesDb. It recently had a huge redesig
 
 There's a small caveat to this module, as it has a monthly request limit (see above) per IP per month. But this should be plenty for most people.
 
-Their API is based on a file name search. This means that the returned results do have a chance of being faulty. Skyscraper does a lot internally to make sure accepted data is for the correct game. But it is impossible to ensure 100% correct results, so do keep that in mind when using it. Consider using the `--interactive` command line option if you want complete control of the accepted entries.
+Their API is based on a file name search. This means that the returned results do have a chance of being faulty. Skyscraper does a lot internally to make sure accepted data is for the correct game. But it is impossible to ensure 100% correct results, so do keep that in mind when using it. Consider using the `--flags interactive` command line flag if you want complete control of the accepted entries.
 
 #### ArcadeDB by motoschifo
 * Shortname: *`arcadedb`*
@@ -102,7 +102,7 @@ There's a caveat to the module as it has quite strong restrictions for the numbe
 Please use this module sparingly. And only ever use it to scrape those last few roms you can't get any data for using any of the other sources.
 
 #### IGDB
-![IGDB logo](https://raw.githubusercontent.com/muldjord/skyscraper/master/docs/logos/igdb.png)
+![IGDB logo](resources/igdb.png)
 * Shortname: *`igdb`*
 * Type: *Online*
 * Website: *[www.igdb.com](https://www.igdb.com)*
@@ -143,7 +143,7 @@ If you're looking specifically for ZX Spectrum data, this is the module to use. 
 * API request limit: *None*
 * Thread limit: *None*
 * Platform support: *All*
-* Media support: *`cover`, `screenshot`, `marquee`*
+* Media support: *`screenshot`, `marquee`, `video`*
 * Example use: `Skyscraper -p snes -s esgamelist`
 
 This module allows you to import data from an existing EmulationStation game list into the Skyscraper cache. This is useful if you already have a lot of data and artwork in a gamelist.xml file and you wish to use it with Skyscraper.

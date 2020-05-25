@@ -68,8 +68,11 @@ void Skyscraper::run()
 {
   printf("Platform:           '\033[1;32m%s\033[0m'\n", config.platform.toStdString().c_str());
   printf("Scraping module:    '\033[1;32m%s\033[0m'\n", config.scraper.toStdString().c_str());
-  if(!config.frontendExtra.isEmpty()) {
-    printf("Extra:              '\033[1;32m%s\033[0m'\n", config.frontendExtra.toStdString().c_str());
+  if(config.scraper == "cache") {
+    printf("Frontend:           '\033[1;32m%s\033[0m'\n", config.frontend.toStdString().c_str());
+    if(!config.frontendExtra.isEmpty()) {
+      printf("Extra:              '\033[1;32m%s\033[0m'\n", config.frontendExtra.toStdString().c_str());
+    }
   }
   printf("Input folder:       '\033[1;32m%s\033[0m'\n", config.inputFolder.toStdString().c_str());
   printf("Game list folder:   '\033[1;32m%s\033[0m'\n", config.gameListFolder.toStdString().c_str());
@@ -106,7 +109,7 @@ void Skyscraper::run()
       decProc.start("which 7z");
       decProc.waitForFinished(10000);
       if(!decProc.readAllStandardOutput().contains("7z")) {
-	printf("Couldn't find '7z' command. 7z is required by the '--unpack' option. On Debian derivatives such as RetroPie you can install it with 'sudo apt-get install p7zip-full'.\n\nNow quitting...\n");
+	printf("Couldn't find '7z' command. 7z is required by the '--flags unpack' flag. On Debian derivatives such as RetroPie you can install it with 'sudo apt-get install p7zip-full'.\n\nNow quitting...\n");
 	exit(1);
       }
     }
@@ -502,7 +505,7 @@ void Skyscraper::entryReady(GameEntry entry, QString output, QString debug)
       // By clearing the queue here we basically tell Skyscraper to stop and quit nicely
       config.pretend = true;
       queue->clearAll();
-    } else if(QStorageInfo(QDir::current()).bytesFree() < spaceLimit) {
+    } else if(QStorageInfo(QDir(config.cacheFolder)).bytesFree() < spaceLimit) {
       printf("\033[1;31mYou have very little disk space left on the Skyscraper resource cache drive, please free up some space and try again. Now aborting...\033[0m\n\n");
       printf("Note! You can disable this check by setting 'spaceCheck=\"false\"' in the '[main]' section of config.ini.\n\n");
       // By clearing the queue here we basically tell Skyscraper to stop and quit nicely
@@ -587,8 +590,8 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   distro = "/usr/local/etc/skyscraper/README.md";
   copyFile(distro, current);
 
-  current = "hints.txt";
-  distro = "/usr/local/etc/skyscraper/hints.txt";
+  current = "hints.xml";
+  distro = "/usr/local/etc/skyscraper/hints.xml";
   copyFile(distro, current);
 
   current = "ARTWORK.md";
@@ -778,7 +781,13 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
     config.videos = settings.value("videos").toBool();
   }
   if(settings.contains("videoSizeLimit")) {
-    config.videoSizeLimit = settings.value("videoSizeLimit").toInt() * 1000 * 1000;
+    config.videoSizeLimit = settings.value("videoSizeLimit").toInt() * 1024 * 1024;
+  }
+  if(settings.contains("videoConvertCommand")) {
+    config.videoConvertCommand = settings.value("videoConvertCommand").toString();
+  }
+  if(settings.contains("videoConvertExtension")) {
+    config.videoConvertExtension = settings.value("videoConvertExtension").toString();
   }
   if(settings.contains("symlink")) {
     config.symlink = settings.value("symlink").toBool();
@@ -838,8 +847,11 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   if(parser.isSet("p") && Platform::getPlatforms().contains(parser.value("p"))) {
     config.platform = parser.value("p");
   } else {
-    printf("Please set a valid platform with '-p [platform]'\nCheck '--help' for a list of supported platforms, now exiting...\n");
-    exit(1);
+    if((!parser.isSet("flags") && parser.value("flags") != "help") &&
+       (!parser.isSet("cache") && parser.value("cache") != "help")) {
+      printf("Please set a valid platform with '-p [platform]'\nCheck '--help' for a list of supported platforms.\n");
+      exit(1);
+    }
   }
   if(settings.contains("cacheFolder")) {
     QString cacheFolder = settings.value("cacheFolder").toString();
@@ -1123,6 +1135,15 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   if(settings.contains("videoSizeLimit")) {
     config.videoSizeLimit = settings.value("videoSizeLimit").toInt() * 1000 * 1000;
   }
+  if(settings.contains("videoConvertCommand")) {
+    config.videoConvertCommand = settings.value("videoConvertCommand").toString();
+  }
+  if(settings.contains("videoConvertExtension")) {
+    config.videoConvertExtension = settings.value("videoConvertExtension").toString();
+  }
+  if(settings.contains("videoPreferNormalized")) {
+    config.videoPreferNormalized = settings.value("videoPreferNormalized").toBool();
+  }
   settings.endGroup();
 
   // Command line configs, overrides main, platform, module and defaults
@@ -1170,6 +1191,7 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
       printf("Use comma-separated flags (eg. '--flags FLAG1,FLAG2') to enable multiple flags.\nThe following is a list of valid flags and what they do:\n");
 
       printf("  \033[1;33mforcefilename\033[0m: Use filename as game name instead of the returned game title when generating a game list. Consider using 'nameTemplate' config.ini option instead.\n");
+      printf("  \033[1;33minteractive\033[0m: Always ask user to choose best returned result from the scraping modules.\n");
       printf("  \033[1;33mnobrackets\033[0m: Disables any [] and () tags in the frontend game titles. Consider using 'nameTemplate' config.ini option instead.\n");
       printf("  \033[1;33mnocovers\033[0m: Disable covers/boxart from being cached locally. Only do this if you do not plan to use the cover artwork in 'artwork.xml'\n");
       printf("  \033[1;33mnohints\033[0m: Disables the 'DID YOU KNOW:' hints when running Skyscraper.\n");
@@ -1179,15 +1201,19 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
       printf("  \033[1;33mnosubdirs\033[0m: Do not include input folder subdirectories when scraping.\n");
       printf("  \033[1;33mnowheels\033[0m: Disable wheels from being cached locally. Only do this if you do not plan to use the wheel artwork in 'artwork.xml'\n");
       printf("  \033[1;33monlymissing\033[0m: Tells Skyscraper to skip all files which already have any data from any source in the cache.\n");
+      printf("  \033[1;33mpretend\033[0m: Only relevant when generating a game list. It disables the game list generator and artwork compositor and only outputs the results of the potential game list generation to the terminal. Use it to check what and how the data will be combined from cached resources.\n");
       printf("  \033[1;33mrelative\033[0m: Forces all gamelist paths to be relative to rom location.\n");
       printf("  \033[1;33mskipexistingcovers\033[0m: When generating gamelists, skip processing covers that already exist in the media output folder.\n");
       printf("  \033[1;33mskipexistingmarquees\033[0m: When generating gamelists, skip processing marquees that already exist in the media output folder.\n");
       printf("  \033[1;33mskipexistingscreenshots\033[0m: When generating gamelists, skip processing screenshots that already exist in the media output folder.\n");
       printf("  \033[1;33mskipexistingvideos\033[0m: When generating gamelists, skip copying videos that already exist in the media output folder.\n");
-      printf("  \033[1;33mskipexistinwheels\033[0m: When generating gamelists, skip processing wheels that already exist in the media output folder.\n");
+      printf("  \033[1;33mskipexistingwheels\033[0m: When generating gamelists, skip processing wheels that already exist in the media output folder.\n");
       printf("  \033[1;33mskipped\033[0m: When generating a gamelist, also include games that do not have any cached data.\n");
       printf("  \033[1;33msymlink\033[0m: Forces cached videos to be symlinked to game list destination to save space. WARNING! Deleting or moving files from your cache can invalidate the links!\n");
+      printf("  \033[1;33munattend\033[0m: Skip initial questions when scraping. It will then always overwrite existing gamelist and not skip existing entries.\n");
+      printf("  \033[1;33munattendskip\033[0m: Skip initial questions when scraping. It will then always overwrite existing gamelist and always skip existing entries.\n");
       printf("  \033[1;33munpack\033[0m: Unpacks and checksums the file inside 7z or zip files instead of the compressed file itself. Be aware that this option requires '7z' to be installed on the system to work. Only relevant for 'screenscraper' scraping module.\n");
+      printf("  \033[1;33mvideos\033[0m: Enables scraping and caching of videos for the scraping modules that support them. Beware, this takes up a lot of disk space!.\n");
       printf("\n");
       exit(0);
     } else {
@@ -1195,6 +1221,8 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
       for(const auto &flag: flags) {
 	if(flag == "forcefilename") {
 	  config.forceFilename = true;
+	} else if(flag == "interactive") {
+	  config.interactive = true;
 	} else if(flag == "nobrackets") {
 	  config.brackets = false;
 	} else if(flag == "nocovers") {
@@ -1213,6 +1241,8 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
 	  config.cacheWheels = false;
 	} else if(flag == "onlymissing") {
 	  config.onlyMissing = true;
+	} else if(flag == "pretend") {
+	  config.pretend = true;
 	} else if(flag == "relative") {
 	  config.relativePaths = true;
 	} else if(flag == "skipexistingcovers") {
@@ -1229,10 +1259,16 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
 	  config.skipped = true;
 	} else if(flag == "symlink") {
 	  config.symlink = true;
+	} else if(flag == "unattend") {
+	  config.unattend = true;
+	} else if(flag == "unattendskip") {
+	  config.unattendSkip = true;
 	} else if(flag == "unpack") {
 	  config.unpack = true;
+	} else if(flag == "videos") {
+	  config.videos = true;
 	} else {
-	  printf("Unknown flag '%s', please check '--flags help' for list of all valid flags. Exiting...\n", flag.toStdString().c_str());
+	  printf("Unknown flag '%s', please check '--flags help' for a list of valid flags. Exiting...\n", flag.toStdString().c_str());
 	  exit(1);
 	}
       }
@@ -1522,17 +1558,17 @@ void Skyscraper::copyFile(QString &distro, QString &current, bool overwrite)
 
 void Skyscraper::showHint()
 {
-  QFile hintsFile("hints.txt");
-  QList<QString> hints;
-  if(hintsFile.open(QIODevice::ReadOnly)) {
-    while(!hintsFile.atEnd()) {
-      hints.append(QString(hintsFile.readLine()));
-    }
-    hintsFile.close();
-    if(!hints.isEmpty()) {
-      printf("\033[1;33mDID YOU KNOW:\033[0m %s\n", hints.at(qrand() % hints.size()).toStdString().c_str());
-    }
+  QFile hintsFile("hints.xml");
+  QDomDocument hintsXml;
+  if(!hintsFile.open(QIODevice::ReadOnly)) {
+    return;
   }
+  if(!hintsXml.setContent(&hintsFile)) {
+    return;
+  }
+  hintsFile.close();
+  QDomNodeList hintNodes = hintsXml.elementsByTagName("hint");
+  printf("\033[1;33mDID YOU KNOW:\033[0m %s\n\n", hintsXml.elementsByTagName("hint").at(qrand() % hintNodes.length()).toElement().text().toStdString().c_str());
 }
 
 void Skyscraper::doPrescrapeJobs()

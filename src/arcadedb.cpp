@@ -161,32 +161,37 @@ void ArcadeDB::getDescription(GameEntry &game)
 
 void ArcadeDB::getCover(GameEntry &game)
 {
-  manager.request(jsonObj.value("url_image_flyer").toString());
-  q.exec();
-  {
-    QImage image;
-    if(image.loadFromData(manager.getData())) {
-      game.coverData = manager.getData();
-      return;
-    }
-  }
-  manager.request(jsonObj.value("url_image_title").toString());
-  q.exec();
-  {
-    QImage image;
-    if(image.loadFromData(manager.getData())) {
-      game.coverData = manager.getData();
-      return;
+  for(const auto &key: jsonObj.keys()) {
+    if(key == "url_image_flyer" ||
+       key == "url_image_title") {
+      if(jsonObj.value(key).toString().isEmpty()) {
+	continue;
+      }
+      manager.request(jsonObj.value(key).toString());
+      q.exec();
+      {
+	QImage image;
+	if(manager.getError() == QNetworkReply::NoError &&
+	   image.loadFromData(manager.getData())) {
+	  game.coverData = manager.getData();
+	  return;
+	}
+      }
     }
   }
 }
 
 void ArcadeDB::getScreenshot(GameEntry &game)
 {
+  if(!jsonObj.contains("url_image_ingame") ||
+     jsonObj.value("url_image_ingame").toString().isEmpty()) {
+    return;
+  }
   manager.request(jsonObj.value("url_image_ingame").toString());
   q.exec();
   QImage image;
-  if(image.loadFromData(manager.getData())) {
+  if(manager.getError() == QNetworkReply::NoError &&
+     image.loadFromData(manager.getData())) {
     game.screenshotData = manager.getData();
   }
 }
@@ -196,27 +201,38 @@ void ArcadeDB::getWheel(GameEntry &game)
   manager.request("http://adb.arcadeitalia.net/media/mame.current/decals/" + jsonObj["game_name"].toString() + ".png");
   q.exec();
   QImage image;
-  if(image.loadFromData(manager.getData())) {
+  if(manager.getError() == QNetworkReply::NoError &&
+     image.loadFromData(manager.getData())) {
     game.wheelData = manager.getData();
   }
 }
 
 void ArcadeDB::getMarquee(GameEntry &game)
 {
+  if(!jsonObj.contains("url_image_marquee") ||
+     jsonObj.value("url_image_marquee").toString().isEmpty()) {
+    return;
+  }
   manager.request(jsonObj.value("url_image_marquee").toString());
   q.exec();
   QImage image;
-  if(image.loadFromData(manager.getData())) {
+  if(manager.getError() == QNetworkReply::NoError &&
+     image.loadFromData(manager.getData())) {
     game.marqueeData = manager.getData();
   }
 }
 
 void ArcadeDB::getVideo(GameEntry &game)
 {
+  if(!jsonObj.contains("url_video_shortplay") ||
+     jsonObj.value("url_video_shortplay").toString().isEmpty()) {
+    return;
+  }
   manager.request(jsonObj.value("url_video_shortplay").toString());
   q.exec();
   game.videoData = manager.getData();
-  if(game.videoData.length() > (1024 * 500)) {
+  if(manager.getError() == QNetworkReply::NoError &&
+     game.videoData.length() > 4096) {
     game.videoFormat = "mp4";
   } else {
     game.videoData = "";

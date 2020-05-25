@@ -135,7 +135,7 @@ void EmulationStation::assembleList(QString &finalOutput, QList<GameEntry> &game
     QString entryType = "game";
 
     QFileInfo entryInfo(entry.path);
-    if(entryInfo.isFile()) {
+    if(entryInfo.isFile() && config->platform != "daphne") {
       // Check if game is in subfolder. If so, change entry to <folder> type.
       QString entryAbsolutePath = entryInfo.absolutePath();
       // Check if path is exactly one subfolder beneath root platform folder (has one more '/')
@@ -150,6 +150,7 @@ void EmulationStation::assembleList(QString &finalOutput, QList<GameEntry> &game
 	  extensions.replace("*.bin", "");
 	  extensions = extensions.simplified();
 	}
+	// Check is subfolder has more roms than one, in which case we stick with <game>
 	if(QDir(entryAbsolutePath, extensions).count() == 1) {
 	  entryType = "folder";
 	  entry.path = entryAbsolutePath;
@@ -162,6 +163,10 @@ void EmulationStation::assembleList(QString &finalOutput, QList<GameEntry> &game
     // Preserve certain data from old game list entry, but only for empty data
     preserveFromOld(entry);
 
+    if(config->platform == "daphne") {
+      entry.path.replace("daphne/roms/", "daphne/").replace(".zip", ".daphne");
+      entryType = "folder";
+    }
     if(config->relativePaths) {
       entry.path.replace(config->inputFolder, ".");
     }
@@ -170,10 +175,10 @@ void EmulationStation::assembleList(QString &finalOutput, QList<GameEntry> &game
     finalOutput.append("    <path>" + StrTools::xmlEscape(entry.path) + "</path>\n");
     finalOutput.append("    <name>" + StrTools::xmlEscape(entry.title) + "</name>\n");
     if(entry.coverFile.isEmpty()) {
-      finalOutput.append("    <cover />\n");
+      finalOutput.append("    <thumbnail />\n");
     } else {
       // The replace here IS supposed to be 'inputFolder' and not 'mediaFolder' because we only want the path to be relative if '-o' hasn't been set. So this will only make it relative if the path is equal to inputFolder which is what we want.
-      finalOutput.append("    <cover>" + (config->relativePaths?StrTools::xmlEscape(entry.coverFile).replace(config->inputFolder, "."):StrTools::xmlEscape(entry.coverFile)) + "</cover>\n");
+      finalOutput.append("    <thumbnail>" + (config->relativePaths?StrTools::xmlEscape(entry.coverFile).replace(config->inputFolder, "."):StrTools::xmlEscape(entry.coverFile)) + "</thumbnail>\n");
     }
     if(entry.screenshotFile.isEmpty()) {
       finalOutput.append("    <image />\n");
