@@ -91,6 +91,7 @@ QStringList Platform::getPlatforms()
   platforms.append("nes");
   platforms.append("ngp");
   platforms.append("ngpc");
+  platforms.append("openbor");
   platforms.append("oric");
   platforms.append("pc");
   platforms.append("pc88");
@@ -216,9 +217,9 @@ QStringList Platform::getScrapers(QString platform)
   } else if(platform == "megacd") {
     scrapers.append("screenscraper");
   } else if(platform == "megadrive") {
-    scrapers.append("screensicraper");
+    scrapers.append("screenscraper");
   } else if(platform == "msdos") {
-    scrapers.append("screensicraper");
+    scrapers.append("screenscraper");
   } else if(platform == "msx") {
     scrapers.append("screenscraper");
   } else if(platform == "n64") {
@@ -237,6 +238,8 @@ QStringList Platform::getScrapers(QString platform)
   } else if(platform == "ngp") {
     scrapers.append("screenscraper");
   } else if(platform == "ngpc") {
+    scrapers.append("screenscraper");
+  } else if(platform == "openbor") {
     scrapers.append("screenscraper");
   } else if(platform == "oric") {
     scrapers.append("screenscraper");
@@ -431,6 +434,8 @@ QString Platform::getFormats(QString platform, QString extensions, QString addEx
     formats.append(" *.ngp");
   } else if(platform == "ngpc") {
     formats.append(" *.ngc");
+  } else if(platform == "openbor") {
+    formats.append(" *.pak");
   } else if(platform == "oric") {
     formats.append(" *.dsk *.tap");
   } else if(platform == "pc") {
@@ -602,6 +607,8 @@ QString Platform::getDefaultScraper(QString platform)
   } else if(platform == "ngp") {
     scraper = "cache";
   } else if(platform == "ngpc") {
+    scraper = "cache";
+  } else if(platform == "openbor") {
     scraper = "cache";
   } else if(platform == "oric") {
     scraper = "cache";
@@ -1167,6 +1174,8 @@ QStringList Platform::getAliases(QString platform)
   } else if(platform == "ngpc") {
     aliases.append("neo geo pocket color");
     aliases.append("neo-geo pocket color");
+  } else if(platform == "openbor") {
+    aliases.append("beats of rage");
   } else if(platform == "oric") {
     aliases.append("oric 1 / atmos");
   } else if(platform == "pc") {

@@ -732,6 +732,8 @@ QString ScreenScraper::getPlatformId(const QString platform)
     return "25";
   } else if(platform == "ngpc") {
     return "82";
+  } else if(platform == "openbor") {
+    return "214";
   } else if(platform == "oric") {
     return "131";
   } else if(platform == "pc") {
